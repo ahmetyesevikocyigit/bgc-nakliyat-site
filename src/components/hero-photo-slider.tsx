@@ -1,0 +1,105 @@
+"use client";
+
+import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+
+const heroPhotos = [
+  {
+    src: "/images/bgc-nakliyat-hero.png",
+    alt: "BGC Nakliyat aracı ve taşıma ekibi",
+  },
+  {
+    src: "/images/asansorlu-tasima.png",
+    alt: "Asansörlü taşıma hizmeti",
+  },
+  {
+    src: "/images/parca-esya-tasima.png",
+    alt: "Parça eşya taşıma hizmeti",
+  },
+  {
+    src: "/images/ofis-tasima.png",
+    alt: "Ofis taşıma hizmeti",
+  },
+  {
+    src: "/images/paketleme-sigortali-tasima.png",
+    alt: "Paketleme ve sigortalı taşıma hizmeti",
+  },
+];
+
+const AUTOPLAY_DELAY = 3600;
+
+export function HeroPhotoSlider() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % heroPhotos.length);
+    }, AUTOPLAY_DELAY);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const showPrevious = () => {
+    setActiveIndex((current) => (current - 1 + heroPhotos.length) % heroPhotos.length);
+  };
+
+  const showNext = () => {
+    setActiveIndex((current) => (current + 1) % heroPhotos.length);
+  };
+
+  return (
+    <div className="relative h-full min-h-[420px] overflow-hidden">
+      {heroPhotos.map((photo, index) => (
+        <Image
+          key={photo.src}
+          src={photo.src}
+          alt={photo.alt}
+          fill
+          priority={index === 0}
+          className={`object-cover transition duration-700 ${
+            activeIndex === index ? "opacity-100 scale-100" : "opacity-0 scale-105"
+          }`}
+          sizes="100vw"
+        />
+      ))}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.05),rgba(2,6,23,0.38))]" />
+      <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between gap-4">
+        <div className="flex gap-2" aria-label="Fotoğraf seçimi">
+          {heroPhotos.map((photo, index) => (
+            <button
+              key={photo.src}
+              type="button"
+              onClick={() => setActiveIndex(index)}
+              className={`h-2.5 rounded-full transition ${
+                activeIndex === index ? "w-8 bg-orange-500" : "w-2.5 bg-white/70"
+              }`}
+              aria-label={`${index + 1}. fotoğrafı göster`}
+              aria-pressed={activeIndex === index}
+            />
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={showPrevious}
+            className="grid size-10 place-items-center rounded-full border border-white/30 bg-slate-950/45 text-white backdrop-blur transition hover:bg-slate-950/65"
+            aria-label="Önceki fotoğraf"
+            title="Önceki fotoğraf"
+          >
+            <ChevronLeft className="size-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={showNext}
+            className="grid size-10 place-items-center rounded-full border border-white/30 bg-slate-950/45 text-white backdrop-blur transition hover:bg-slate-950/65"
+            aria-label="Sonraki fotoğraf"
+            title="Sonraki fotoğraf"
+          >
+            <ChevronRight className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

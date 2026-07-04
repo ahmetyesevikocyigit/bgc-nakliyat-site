@@ -3,6 +3,7 @@ import { googleReviews } from "@/lib/site-data";
 export type SiteReview = {
   author: string;
   location: string;
+  service?: string;
   rating: number;
   text: string;
   authorUri?: string;

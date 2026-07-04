@@ -52,6 +52,12 @@ export const services = [
       "Eşya keşfinden yeni adrese yerleşime kadar taşınma sürecini planlı, güvenli ve hızlı şekilde yönetir.",
     details:
       "Profesyonel ekip, uygun araç seçimi, kat ve mesafe planlamasıyla İstanbul içi ev taşıma sürecini daha kontrollü hale getirir.",
+    review: {
+      author: "Agageldi Aganyazow",
+      service: "Evden Eve Nakliyat",
+      rating: 5,
+      text: "Esenyurt’tan Avcılar’a 2+1 evimi taşıttım, BGC Nakliyat gerçekten işini titizlikle yapan profesyonel bir firma. Eşyalarım özenle paketlendi ve hiçbir zarar görmeden teslim edildi.",
+    },
   },
   {
     title: "Parça Eşya Taşıma",
@@ -62,6 +68,12 @@ export const services = [
       "Tekli eşya, birkaç koli ya da küçük hacimli yükler için ekonomik ve pratik taşıma çözümü sunar.",
     details:
       "Küçük taşımalar için gereksiz maliyeti azaltan, hızlı randevu alınabilen esnek nakliyat hizmetidir.",
+    review: {
+      author: "Allanur Atadurdyyew",
+      service: "Parça Eşya Taşıma",
+      rating: 5,
+      text: "Avcılar’dan Esenyurt’a parça eşya taşıma hizmeti aldım. Süreç boyunca iletişimleri çok iyiydi ve eşyalarım tam belirtilen saatte teslim edildi.",
+    },
   },
   {
     title: "Ofis Eşyası Taşıma",
@@ -72,6 +84,12 @@ export const services = [
       "Masa, dolap, teknoloji ekipmanı ve arşivlerin düzenli paketlenip yeni ofise taşınmasını sağlar.",
     details:
       "İş akışını minimum kesintiye uğratmak için operasyon saatleri, ekip sayısı ve taşıma sırası önceden planlanır.",
+    review: {
+      author: "ÇBN Çoban",
+      service: "Ofis Eşyası Taşıma",
+      rating: 5,
+      text: "BGC Nakliyat ile taşındım ve gerçekten çok memnun kaldım. Eşyalarımı büyük bir özenle ve güvenle taşıdılar. Taşıma süreci çok hızlı ve sorunsuz ilerledi.",
+    },
   },
   {
     title: "Asansörlü Taşıma",
@@ -82,6 +100,12 @@ export const services = [
       "Yüksek katlı binalarda dış cephe asansörüyle daha hızlı ve daha güvenli taşıma yapılmasına yardımcı olur.",
     details:
       "Bina merdiveni veya iç asansörün uygun olmadığı durumlarda eşya hasarı riskini azaltan etkili bir çözümdür.",
+    review: {
+      author: "Serdar Göçer",
+      service: "Asansörlü Taşıma",
+      rating: 5,
+      text: "Koltuklar asansöre girmediğinde 5. kata kadar merdivenden çıkardılar. Sorunsuz, sualsiz çok teşekkür ederim.",
+    },
   },
   {
     title: "Şehirlerarası Nakliyat",
@@ -91,6 +115,12 @@ export const services = [
       "İstanbul çıkışlı şehirlerarası taşımalar için rota, paketleme ve teslimat sürecini uçtan uca planlar.",
     details:
       "Uzun mesafeli taşımalarda araç düzeni, sigorta ve teslim zamanlaması daha baştan netleştirilir.",
+    review: {
+      author: "Huseyin Çimçim",
+      service: "Şehirlerarası Nakliyat",
+      rating: 5,
+      text: "Başka bir semte taşınma sürecimde bu nakliye firmasını tercih ettim ve son derece memnun kaldım. Ekip son derece profesyoneldi, eşyalarımı özenle taşıdı.",
+    },
   },
   {
     title: "Paketleme ve Sigortalı Taşıma",
@@ -101,6 +131,12 @@ export const services = [
       "Kırılacak, hassas ve değerli eşyalar için doğru ambalajlama ve sigortalı taşıma güveni sağlar.",
     details:
       "Eşyalar kategorisine göre paketlenir; taşıma süreci daha güvenli ve izlenebilir hale getirilir.",
+    review: {
+      author: "Arif Keskin",
+      service: "Paketleme ve Sigortalı Taşıma",
+      rating: 5,
+      text: "Parça eşya taşıma nakliye hizmetlerinden inanılmaz derecede memnun kaldım. Hassas ve kırılacak eşyalar çok dikkatli bir şekilde paketlendi ve taşındı.",
+    },
   },
 ];
 
@@ -225,40 +261,74 @@ export const featureItems = [
 
 export const googleReviews = [
   {
-    author: "Murat K.",
-    location: "Esenyurt",
+    author: "Allanur Atadurdyyew",
+    location: "Avcılar - Esenyurt",
+    service: "Parça Eşya Taşıma",
     rating: 5,
-    text: "Taşınma saatinde geldiler, paketleme düzenliydi. Eşyalar yeni eve sorunsuz ulaştı.",
+    text: "Avcılar’dan Esenyurt’a parça eşya taşıma hizmeti aldım. Süreç boyunca iletişimleri çok iyiydi ve eşyalarım tam belirtilen saatte teslim edildi. Fiyat performans açısından oldukça memnun kaldım. Güvenilir nakliyat firması arayanlar için güzel bir tercih.",
   },
   {
-    author: "Elif A.",
-    location: "Beylikdüzü",
+    author: "Agageldi Aganyazow",
+    location: "Esenyurt - Avcılar",
+    service: "Evden Eve Nakliyat",
     rating: 5,
-    text: "WhatsApp üzerinden hızlı teklif aldım. Ekip güler yüzlü ve oldukça dikkatli çalıştı.",
+    text: "Esenyurt’tan Avcılar’a 2+1 evimi taşıttım, BGC Nakliyat gerçekten işini titizlikle yapan profesyonel bir firma. Eşyalarım özenle paketlendi ve hiçbir zarar görmeden teslim edildi.",
   },
   {
-    author: "Serkan T.",
-    location: "Avcılar",
-    rating: 5,
-    text: "Asansörlü taşıma sayesinde süreç beklediğimden kısa sürdü. Tavsiye ederim.",
-  },
-  {
-    author: "Derya Y.",
+    author: "Serdar Göçer",
     location: "İstanbul",
+    service: "Asansörlü Taşıma",
     rating: 5,
-    text: "Ofis taşımamız planlı ilerledi. Kablolar, masalar ve koliler özenle ayrıldı.",
+    text: "Ekip yorulmak bilmiyor. Her şeyi sardılar, koltuklar asansöre girmediğinde 5. kata kadar merdivenden çıkardılar. Sorunsuz, sualsiz çok teşekkür ederim.",
   },
   {
-    author: "Can B.",
-    location: "Esenyurt",
+    author: "Jony English",
+    location: "Bahçeşehir",
+    service: "Villa Taşıma",
     rating: 5,
-    text: "Parça eşya taşıma için ulaştım, aynı gün içinde hızlıca yardımcı oldular.",
+    text: "Bahçeşehir’den Bahçeşehir’e villa taşıma için BGC Nakliyat’ı tercih ettik ve çok memnun kaldık. Profesyonel taşıma ekibi tüm eşyalarımızı özenle paketledi ve sorunsuz şekilde taşıdı.",
   },
   {
-    author: "Zeynep Ö.",
-    location: "Beylikdüzü",
+    author: "Ümmet Baguc",
+    location: "İstanbul",
+    service: "Güvenli Taşımacılık",
     rating: 5,
-    text: "Fiyat ve süreç baştan net anlatıldı. Taşınma günü hiçbir aksama yaşamadık.",
+    text: "Kral Allah işini gücünü Rabbim rast getirsin. Güvenli taşımacılık dediği zaman aklıma sen geliyorsun BGC Nakliyat.",
+  },
+  {
+    author: "Burhan Ozluk",
+    location: "Avcılar",
+    service: "Parça Eşya Taşıma",
+    rating: 5,
+    text: "Avcılar nakliye hizmeti ararken BGC Nakliyat ile tanıştık. Birkaç parça eşyamızın taşınması gerekiyordu ve BGC Nakliyat’ı seçtiğimiz için çok memnunuz.",
+  },
+  {
+    author: "Baki Kılıç",
+    location: "Avcılar",
+    service: "Evden Eve Nakliyat",
+    rating: 5,
+    text: "Avcılar’dan eşya taşıma işi için güvenilir bir nakliye hizmeti ararken BGC Nakliyat ile tanıştık. Profesyonel ekipleri ve hızlı hizmetleri sayesinde taşınma sürecimiz sorunsuz geçti.",
+  },
+  {
+    author: "ÇBN Çoban",
+    location: "İstanbul",
+    service: "Evden Eve Nakliyat",
+    rating: 5,
+    text: "Geçen hafta BGC Nakliyat ile taşındım ve gerçekten çok memnun kaldım. Eşyalarımı büyük bir özenle ve güvenle taşıdılar. Taşıma süreci çok hızlı ve sorunsuz ilerledi.",
+  },
+  {
+    author: "Arif Keskin",
+    location: "İstanbul",
+    service: "Parça Eşya Taşıma",
+    rating: 5,
+    text: "Parça eşya taşıma nakliye hizmetlerinden inanılmaz derecede memnun kaldım. Eşyalarım, özellikle de hassas ve kırılacak olanlar, çok dikkatli bir şekilde paketlendi ve taşındı.",
+  },
+  {
+    author: "Huseyin Çimçim",
+    location: "Avcılar",
+    service: "Evden Eve Nakliyat",
+    rating: 5,
+    text: "Avcılar’dan başka bir semte taşınma sürecimde bu nakliye firmasını tercih ettim ve son derece memnun kaldım. Ekip son derece profesyoneldi, eşyalarımı özenle taşıdı.",
   },
 ];
 

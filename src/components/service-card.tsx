@@ -1,5 +1,13 @@
 import Image from "next/image";
+import { Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+
+type ServiceReview = {
+  author: string;
+  service: string;
+  rating: number;
+  text: string;
+};
 
 type ServiceCardProps = {
   title: string;
@@ -7,22 +15,23 @@ type ServiceCardProps = {
   details?: string;
   image?: string;
   icon: LucideIcon;
+  review?: ServiceReview;
 };
 
-export function ServiceCard({ title, summary, details, image, icon: Icon }: ServiceCardProps) {
+export function ServiceCard({ title, summary, image, icon: Icon, review }: ServiceCardProps) {
   return (
-    <article className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-cyan-200 hover:shadow-2xl hover:shadow-slate-200/80">
-      <div className="relative h-40 overflow-hidden bg-slate-950">
+    <article className="group relative flex h-full flex-col rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/80">
+      <div className="relative mx-4 mt-4 h-48 overflow-hidden rounded-xl bg-slate-950">
         <Image
           src={image || "/images/bgc-nakliyat-hero.png"}
           alt=""
           fill
-          className="object-cover opacity-58 transition duration-500 group-hover:scale-105"
+          className="object-cover transition duration-500 group-hover:scale-105"
           sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
           aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(2,6,23,0.88),rgba(8,47,73,0.45)),radial-gradient(circle_at_85%_18%,rgba(20,184,166,0.30),transparent_34%)]" />
-        <div className="absolute left-4 top-4 grid size-12 place-items-center rounded-full border border-white/20 bg-white/14 p-1 backdrop-blur">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.08),rgba(2,6,23,0.68))]" />
+        <div className="absolute left-4 top-4 grid size-12 place-items-center rounded-full border border-white/25 bg-white p-1 shadow-lg shadow-slate-950/15">
           <Image
             src="/images/bgc-logo.png"
             alt=""
@@ -33,16 +42,42 @@ export function ServiceCard({ title, summary, details, image, icon: Icon }: Serv
             aria-hidden="true"
           />
         </div>
-        <div className="absolute bottom-4 right-4 grid size-[52px] place-items-center rounded-lg border border-white/18 bg-white/12 text-white shadow-xl shadow-slate-950/20 backdrop-blur-xl">
+        <div className="absolute bottom-4 right-4 grid size-[54px] place-items-center rounded-xl bg-orange-500 text-white shadow-xl shadow-orange-950/20">
           <Icon className="size-6" aria-hidden="true" />
         </div>
       </div>
-      <div className="p-6">
-        <div className="mb-4 inline-flex max-w-full whitespace-normal rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-xs font-black uppercase leading-5 tracking-[0.12em] text-cyan-800">
+      <div className="relative flex flex-1 flex-col p-6 pt-5">
+        <div className="mb-4 inline-flex max-w-full whitespace-normal rounded-md border border-slate-950 bg-orange-50 px-3 py-1 text-xs font-black uppercase leading-5 tracking-[0.12em] text-orange-600">
           {title}
         </div>
-        <p className="text-sm leading-7 text-slate-600">{summary}</p>
-        {details ? <p className="mt-3 text-sm leading-7 text-slate-600">{details}</p> : null}
+        <p className="text-base font-semibold leading-7 text-slate-800">{summary}</p>
+        {review ? (
+          <div className="relative mt-6 rotate-[-1.5deg] rounded-2xl border border-slate-950 bg-white p-4 shadow-2xl shadow-orange-950/12 ring-1 ring-slate-950/5 transition duration-300 group-hover:-translate-y-1 group-hover:rotate-0">
+            <div className="pointer-events-none absolute -right-3 -top-5 grid size-12 place-items-center overflow-hidden rounded-full border border-slate-950 bg-white p-1.5 shadow-lg shadow-slate-950/20">
+              <Image
+                src="/images/google-icon.png"
+                alt=""
+                fill
+                className="object-contain p-1"
+                sizes="48px"
+                unoptimized
+                aria-hidden="true"
+              />
+            </div>
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-slate-950">{review.author}</p>
+                <p className="text-xs font-bold text-slate-500">{review.service}</p>
+              </div>
+              <div className="flex gap-0.5 text-amber-400" aria-label={`${review.rating} yıldız`}>
+                {Array.from({ length: review.rating }).map((_, index) => (
+                  <Star key={index} className="size-3.5 fill-current" aria-hidden="true" />
+                ))}
+              </div>
+            </div>
+            <p className="line-clamp-4 text-sm font-medium leading-6 text-slate-700">{review.text}</p>
+          </div>
+        ) : null}
       </div>
     </article>
   );

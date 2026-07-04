@@ -34,22 +34,13 @@ export function FloatingWhatsapp() {
 
   return (
     <div
-      className={`fixed bottom-3 right-3 z-50 flex flex-col items-end gap-2.5 transition duration-300 md:bottom-6 md:right-6 md:gap-3 ${
+      className={`pointer-events-none fixed inset-x-3 bottom-3 z-50 flex items-end justify-between gap-3 transition duration-300 md:inset-x-6 md:bottom-6 ${
         isVisible ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"
       }`}
     >
       <a
-        href={company.phoneHref}
-        className="inline-flex size-11 items-center justify-center gap-2 rounded-full border border-white/70 bg-orange-500 text-sm font-black text-white shadow-2xl shadow-orange-950/20 backdrop-blur transition hover:-translate-y-1 hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-200 md:h-11 md:w-auto md:px-4"
-        aria-label={`Hemen ara: ${company.phoneDisplay}`}
-        title={`Hemen ara: ${company.phoneDisplay}`}
-      >
-        <Phone className="size-4" aria-hidden="true" />
-        <span className="hidden md:inline">Hemen Ara</span>
-      </a>
-      <a
         href={company.whatsappHref}
-        className="grid size-[52px] place-items-center rounded-full shadow-2xl shadow-emerald-950/30 transition hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-emerald-200 md:size-16"
+        className="pointer-events-auto grid size-[54px] place-items-center rounded-full shadow-2xl shadow-emerald-950/30 transition hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-emerald-200 md:size-16"
         aria-label="WhatsApp ile iletişime geç"
         title="WhatsApp"
       >
@@ -62,6 +53,15 @@ export function FloatingWhatsapp() {
           unoptimized
           aria-hidden="true"
         />
+      </a>
+      <a
+        href={company.phoneHref}
+        className="pointer-events-auto inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/70 bg-orange-500 px-5 text-sm font-black text-white shadow-2xl shadow-orange-950/20 backdrop-blur transition hover:-translate-y-1 hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-200 md:min-h-11 md:px-4"
+        aria-label={`Hemen ara: ${company.phoneDisplay}`}
+        title={`Hemen ara: ${company.phoneDisplay}`}
+      >
+        <Phone className="size-4" aria-hidden="true" />
+        <span>Hemen Ara</span>
       </a>
     </div>
   );

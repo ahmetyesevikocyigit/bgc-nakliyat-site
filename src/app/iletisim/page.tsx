@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { ActionLinks } from "@/components/action-links";
@@ -14,17 +13,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <>
-      <section className="relative isolate overflow-hidden bg-[linear-gradient(135deg,#f8fafc_0%,#ecfeff_52%,#fff7ed_100%)] px-4 pb-20 pt-28 text-slate-950 sm:px-6 lg:px-8">
-        <Image
-          src="/images/bgc-nakliyat-hero.png"
-          alt=""
-          fill
-          className="absolute inset-0 -z-20 object-cover opacity-[0.10]"
-          sizes="100vw"
-          priority
-          aria-hidden="true"
-        />
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_12%_16%,rgba(14,165,233,0.16),transparent_34%),radial-gradient(circle_at_86%_20%,rgba(249,115,22,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.94))]" />
+      <section className="border-b border-slate-200 bg-white px-4 pb-14 pt-36 text-slate-950 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <p className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-orange-500">
             İletişim
@@ -42,7 +31,7 @@ export default function ContactPage() {
                 <ActionLinks />
               </div>
             </div>
-            <div className="rounded-lg border border-white/70 bg-white/60 p-6 shadow-2xl shadow-cyan-950/10 backdrop-blur-2xl">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 shadow-sm">
               <p className="text-sm font-bold text-slate-500">En hızlı iletişim</p>
               <p className="mt-2 text-3xl font-black">{company.phoneDisplay}</p>
               <p className="mt-3 text-sm leading-7 text-slate-600">

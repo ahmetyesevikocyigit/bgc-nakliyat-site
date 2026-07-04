@@ -78,9 +78,9 @@ function ServiceShowcaseCard({
 export default function ServicesPage() {
   return (
     <>
-      <section className="bg-slate-950 px-4 pb-20 pt-32 text-white sm:px-6 lg:px-8">
+      <section className="border-b border-slate-200 bg-white px-4 pb-14 pt-36 text-slate-950 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <p className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-orange-300">
+          <p className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-orange-500">
             Hizmetler
           </p>
           <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-end">
@@ -88,13 +88,13 @@ export default function ServicesPage() {
               <h1 className="max-w-4xl text-4xl font-black tracking-tight sm:text-6xl">
                 Taşınma ihtiyacınıza göre planlanan nakliyat çözümleri.
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
                 {company.name}, İstanbul’un yoğun apartman, site ve ofis trafiğine uygun
                 ekip, araç ve paketleme planı oluşturur.
               </p>
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/8 p-6">
-              <p className="text-sm font-bold text-slate-300">Hızlı teklif için</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 shadow-sm">
+              <p className="text-sm font-bold text-slate-500">Hızlı teklif için</p>
               <p className="mt-2 text-2xl font-black">{company.phoneDisplay}</p>
               <div className="mt-5">
                 <ActionLinks compact />

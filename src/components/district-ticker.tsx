@@ -9,7 +9,7 @@ export function DistrictTickerPanel({ districts }: DistrictTickerPanelProps) {
   const secondRowDistricts = districts.slice(Math.ceil(districts.length / 2));
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/60 sm:p-6">
+    <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden border-y border-slate-200 bg-white py-5 shadow-xl shadow-slate-200/60 sm:py-6">
       <style>{`
         .district-ticker {
           animation: district-ticker 68s linear infinite;
@@ -34,9 +34,9 @@ export function DistrictTickerPanel({ districts }: DistrictTickerPanelProps) {
           }
         }
       `}</style>
-      <div className="relative -mx-5 space-y-3 sm:-mx-6" aria-label="Hizmet verilen İstanbul ilçeleri">
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-white to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-white to-transparent" />
+      <div className="relative space-y-3" aria-label="Hizmet verilen İstanbul ilçeleri">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-white to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-white to-transparent" />
         <DistrictTicker districts={firstRowDistricts} />
         <DistrictTicker districts={secondRowDistricts} reverse />
       </div>

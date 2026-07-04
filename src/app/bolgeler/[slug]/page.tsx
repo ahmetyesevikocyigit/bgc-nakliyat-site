@@ -55,11 +55,11 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
 
   return (
     <>
-      <section className="bg-[radial-gradient(circle_at_top_left,#fed7aa,transparent_32%),linear-gradient(135deg,#083344,#0f172a)] px-4 pb-20 pt-32 text-white sm:px-6 lg:px-8">
+      <section className="border-b border-slate-200 bg-white px-4 pb-14 pt-36 text-slate-950 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <Link
             href="/bolgeler"
-            className="mb-8 inline-flex items-center gap-2 text-sm font-black text-cyan-100 transition hover:text-white"
+            className="mb-8 inline-flex items-center gap-2 text-sm font-black text-cyan-700 transition hover:text-orange-600"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             Bölgelere dön
@@ -67,7 +67,7 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
           <h1 className="max-w-4xl text-4xl font-black tracking-tight sm:text-6xl">
             {district} nakliyat hizmeti.
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-cyan-50/85">
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
             {district} bölgesinde evden eve nakliyat, parça eşya taşıma, ofis taşıma ve
             asansörlü taşıma süreçleri için keşif, araç ve ekip planı önceden netleştirilir.
           </p>

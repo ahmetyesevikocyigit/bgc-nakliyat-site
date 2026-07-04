@@ -98,21 +98,21 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <>
-      <section className="bg-[radial-gradient(circle_at_top_left,#fed7aa,transparent_30%),linear-gradient(135deg,#083344,#0f172a)] px-4 pb-16 pt-32 text-white sm:px-6 lg:px-8">
+      <section className="border-b border-slate-200 bg-white px-4 pb-14 pt-36 text-slate-950 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <Link
             href="/blog"
-            className="mb-8 inline-flex items-center gap-2 text-sm font-black text-cyan-100 transition hover:text-white"
+            className="mb-8 inline-flex items-center gap-2 text-sm font-black text-cyan-700 transition hover:text-orange-600"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             Bloga dön
           </Link>
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/10 px-3 py-1 text-xs font-black text-orange-100 backdrop-blur">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-xs font-black text-orange-600">
             <CalendarDays className="size-3.5" aria-hidden="true" />
             {formatDate(post.date)}
           </div>
           <h1 className="text-4xl font-black tracking-tight sm:text-6xl">{post.title}</h1>
-          <p className="mt-6 text-lg leading-8 text-cyan-50/85">{post.excerpt}</p>
+          <p className="mt-6 text-lg leading-8 text-slate-600">{post.excerpt}</p>
         </div>
       </section>
 

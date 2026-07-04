@@ -62,15 +62,15 @@ export default function RegionsPage() {
 
   return (
     <>
-      <section className="bg-[radial-gradient(circle_at_top_left,#fed7aa,transparent_32%),linear-gradient(135deg,#083344,#0f172a)] px-4 pb-20 pt-32 text-white sm:px-6 lg:px-8">
+      <section className="border-b border-slate-200 bg-white px-4 pb-14 pt-36 text-slate-950 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <p className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-orange-200">
+          <p className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-orange-500">
             Hizmet Bölgeleri
           </p>
           <h1 className="max-w-4xl text-4xl font-black tracking-tight sm:text-6xl">
             İstanbul’un yoğun bölgelerinde hızlı keşif ve doğru taşıma planı.
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-cyan-50/85">
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
             {heroText}
           </p>
           <div className="mt-8">

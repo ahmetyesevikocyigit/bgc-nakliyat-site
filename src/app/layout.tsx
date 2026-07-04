@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import { FloatingWhatsapp } from "@/components/floating-whatsapp";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { QuoteFormSection } from "@/components/quote-form-section";
 import { company, movingCompanySchema, serviceDistricts } from "@/lib/site-data";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin", "latin-ext"],
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -60,7 +55,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="tr" className={`${geistSans.variable} ${geistMono.variable} scroll-smooth`}>
+    <html lang="tr" className={`${geistMono.variable} scroll-smooth`}>
       <body className="min-h-screen bg-white text-slate-950 antialiased">
         <script
           type="application/ld+json"
