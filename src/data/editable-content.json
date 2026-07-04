@@ -1,0 +1,103 @@
+{
+  "serviceDistricts": [
+    "Adalar",
+    "Arnavutköy",
+    "Ataşehir",
+    "Avcılar",
+    "Bağcılar",
+    "Bahçelievler",
+    "Bakırköy",
+    "Başakşehir",
+    "Bayrampaşa",
+    "Beşiktaş",
+    "Beykoz",
+    "Beylikdüzü",
+    "Beyoğlu",
+    "Büyükçekmece",
+    "Çatalca",
+    "Çekmeköy",
+    "Esenler",
+    "Esenyurt",
+    "Eyüpsultan",
+    "Fatih",
+    "Gaziosmanpaşa",
+    "Güngören",
+    "Kadıköy",
+    "Kağıthane",
+    "Kartal",
+    "Küçükçekmece",
+    "Maltepe",
+    "Pendik",
+    "Sancaktepe",
+    "Sarıyer",
+    "Silivri",
+    "Sultanbeyli",
+    "Sultangazi",
+    "Şile",
+    "Şişli",
+    "Tuzla",
+    "Ümraniye",
+    "Üsküdar",
+    "Zeytinburnu"
+  ],
+  "faqItems": [
+    {
+      "question": "İstanbul'da evden eve nakliyat fiyatları ne kadardır?",
+      "answer": "Fiyat; eşya miktarı, çıkış ve varış ilçesi, kat bilgisi, asansör kullanımı, paketleme ihtiyacı ve taşınma tarihine göre belirlenir. Net fiyat için WhatsApp üzerinden eşya bilgisi paylaşabilirsiniz."
+    },
+    {
+      "question": "Nakliyat sırasında eşyalarım sigortalı mı?",
+      "answer": "Taşıma süreci sigortalı taşımacılık yaklaşımıyla planlanır. Kırılacak, hassas ve değerli eşyalar için paketleme ve taşıma sırası ayrıca değerlendirilir."
+    },
+    {
+      "question": "Asansörlü taşıma hizmeti nedir ve ne zaman gereklidir?",
+      "answer": "Dış cephe taşıma asansörüyle eşyaların pencereden veya balkondan güvenli şekilde indirilip çıkarılmasıdır. Yüksek kat, dar merdiven, küçük bina asansörü veya ağır eşya durumlarında tercih edilir."
+    },
+    {
+      "question": "Şehirlerarası nakliye hizmeti veriyor musunuz?",
+      "answer": "Evet. İstanbul çıkışlı şehirlerarası taşımalar için rota, araç planı, paketleme kapsamı ve teslimat zamanı önceden netleştirilir."
+    },
+    {
+      "question": "Nakliyat için ne kadar önceden randevu almalıyım?",
+      "answer": "Mümkünse taşınma tarihinden birkaç gün önce iletişime geçmeniz önerilir. Yoğun dönemlerde ekip ve araç planı için daha erken randevu almak süreci kolaylaştırır."
+    },
+    {
+      "question": "Hangi ilçelerde nakliyat hizmeti veriyorsunuz?",
+      "answer": "Esenyurt, Beylikdüzü, Avcılar başta olmak üzere İstanbul genelinde hizmet veriyoruz. Bölgeler sayfasındaki ilçe listesinden hizmet verilen ilçeleri inceleyebilirsiniz."
+    },
+    {
+      "question": "Ofis taşımacılığı yapıyor musunuz?",
+      "answer": "Evet. Masa, dolap, teknoloji ekipmanı, arşiv ve koli taşımaları için ofis düzenine uygun ekip, araç ve taşıma sırası planlanır."
+    },
+    {
+      "question": "Parça eşya taşıma hizmeti nedir?",
+      "answer": "Komple ev taşıma gerektirmeyen tekli eşya, birkaç koli veya küçük hacimli yüklerin ekonomik ve pratik şekilde taşınmasıdır."
+    },
+    {
+      "question": "test soru",
+      "answer": "test cevap"
+    }
+  ],
+  "blogPosts": [
+    {
+      "title": "Evden Eve Nakliyatta Taşınmadan Önce Nelere Dikkat Edilmeli?",
+      "slug": "evden-eve-nakliyatta-tasinmadan-once-dikkat-edilecekler",
+      "seoTitle": "Evden Eve Nakliyatta Taşınmadan Önce Nelere Dikkat Edilmeli?",
+      "seoDescription": "Evden eve nakliyat öncesi eşya listesi, kat bilgisi, araç yanaşma alanı ve paketleme planı için pratik taşınma rehberi.",
+      "excerpt": "Taşınma günü sürpriz yaşamamak için eşya listesi, kat bilgisi, araç yanaşma alanı ve paketleme planı önceden netleştirilmelidir.",
+      "content": "## Taşınma öncesi planlama\n\nEvden eve nakliyat sürecinde en önemli konu, taşınma günü gelmeden önce doğru planlama yapmaktır. Eşya miktarı, çıkış ve varış adresi, kat bilgisi, bina asansörü ve araç yanaşma alanı tekliften önce netleşirse operasyon daha kontrollü ilerler.\n\n## Paketleme ve eşya grupları\n\nKırılacak eşyalar, beyaz eşyalar, mobilyalar ve koliler ayrı ayrı değerlendirilmelidir. Paketleme ihtiyacı olan ürünler önceden belirlendiğinde hem ekip hazırlıklı gelir hem de taşıma sırasında zaman kaybı azalır.\n\n## İstanbul içi taşıma planı\n\nBGC Nakliyat, İstanbul içi taşımacılıkta bölge koşullarını, bina yapısını ve rota planını birlikte değerlendirerek daha güvenli bir taşıma süreci oluşturur.",
+      "date": "2026-07-04",
+      "published": true
+    },
+    {
+      "title": "Asansörlü Taşıma Hangi Durumlarda Gerekir?",
+      "slug": "asansorlu-tasima-hangi-durumlarda-gerekir",
+      "seoTitle": "Asansörlü Taşıma Hangi Durumlarda Gerekir?",
+      "seoDescription": "Yüksek kat, dar merdiven ve ağır mobilya taşımalarında asansörlü taşıma ne zaman gerekir? İstanbul için pratik rehber.",
+      "excerpt": "Yüksek kat, dar merdiven, küçük bina asansörü veya ağır mobilya bulunan taşınmalarda asansörlü taşıma süreci hızlandırır.",
+      "content": "## Asansörlü taşıma nedir?\n\nAsansörlü taşıma, eşyaların dış cephe asansörüyle pencereden veya balkondan güvenli şekilde indirilip çıkarılmasıdır. Özellikle yüksek katlı binalarda, dar merdivenli apartmanlarda ve ağır mobilya taşımalarında tercih edilir.\n\n## Uygunluk nasıl anlaşılır?\n\nBu hizmetin uygun olup olmadığı cephe yapısı, balkon ya da pencere erişimi, araç konumu ve çevredeki park alanına göre değerlendirilir. Uygun planlama yapıldığında taşıma süresi kısalır ve eşya hasarı riski azalır.\n\n## Teklif için hangi bilgiler gerekir?\n\nTaşınma öncesinde bina fotoğrafı ve kat bilgisi paylaşmak, asansörlü taşıma planının hızlı şekilde netleşmesini sağlar.",
+      "date": "2026-07-04",
+      "published": true
+    }
+  ]
+}
