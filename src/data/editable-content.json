@@ -95,5 +95,88 @@
       "date": "2026-07-04",
       "published": true
     }
+  ],
+  "siteImages": {
+    "heroImage": "/images/sehirlerarasi-nakliyat.png",
+    "serviceImages": {
+      "evden-eve-nakliyat": "/images/evden-eve-nakliyat.jpg",
+      "parca-esya-tasima": "/images/parca-esya-tasima-guncel.jpeg",
+      "ofis-tasima": "/images/ofis-tasima.png",
+      "asansorlu-tasima": "/images/asansorlu-tasima.jpg",
+      "sehirlerarasi-nakliyat": "/images/sehirlerarasi-nakliyat.png",
+      "paketleme-sigortali-tasima": "/images/paketleme-sigortali-tasima.jpg"
+    }
+  },
+  "googleReviews": [
+    {
+      "author": "Allanur Atadurdyyew",
+      "location": "Avcılar - Esenyurt",
+      "service": "Parça Eşya Taşıma",
+      "rating": 5,
+      "text": "Avcılar’dan Esenyurt’a parça eşya taşıma hizmeti aldım. Süreç boyunca iletişimleri çok iyiydi ve eşyalarım tam belirtilen saatte teslim edildi. Fiyat performans açısından oldukça memnun kaldım. Güvenilir nakliyat firması arayanlar için güzel bir tercih."
+    },
+    {
+      "author": "Agageldi Aganyazow",
+      "location": "Esenyurt - Avcılar",
+      "service": "Evden Eve Nakliyat",
+      "rating": 5,
+      "text": "Esenyurt’tan Avcılar’a 2+1 evimi taşıttım, BGC Nakliyat gerçekten işini titizlikle yapan profesyonel bir firma. Eşyalarım özenle paketlendi ve hiçbir zarar görmeden teslim edildi."
+    },
+    {
+      "author": "Serdar Göçer",
+      "location": "İstanbul",
+      "service": "Asansörlü Taşıma",
+      "rating": 5,
+      "text": "Ekip yorulmak bilmiyor. Her şeyi sardılar, koltuklar asansöre girmediğinde 5. kata kadar merdivenden çıkardılar. Sorunsuz, sualsiz çok teşekkür ederim."
+    },
+    {
+      "author": "Jony English",
+      "location": "Bahçeşehir",
+      "service": "Villa Taşıma",
+      "rating": 5,
+      "text": "Bahçeşehir’den Bahçeşehir’e villa taşıma için BGC Nakliyat’ı tercih ettik ve çok memnun kaldık. Profesyonel taşıma ekibi tüm eşyalarımızı özenle paketledi ve sorunsuz şekilde taşıdı."
+    },
+    {
+      "author": "Ümmet Baguc",
+      "location": "İstanbul",
+      "service": "Güvenli Taşımacılık",
+      "rating": 5,
+      "text": "Kral Allah işini gücünü Rabbim rast getirsin. Güvenli taşımacılık dediği zaman aklıma sen geliyorsun BGC Nakliyat."
+    },
+    {
+      "author": "Burhan Ozluk",
+      "location": "Avcılar",
+      "service": "Parça Eşya Taşıma",
+      "rating": 5,
+      "text": "Avcılar nakliye hizmeti ararken BGC Nakliyat ile tanıştık. Birkaç parça eşyamızın taşınması gerekiyordu ve BGC Nakliyat’ı seçtiğimiz için çok memnunuz."
+    },
+    {
+      "author": "Baki Kılıç",
+      "location": "Avcılar",
+      "service": "Evden Eve Nakliyat",
+      "rating": 5,
+      "text": "Avcılar’dan eşya taşıma işi için güvenilir bir nakliye hizmeti ararken BGC Nakliyat ile tanıştık. Profesyonel ekipleri ve hızlı hizmetleri sayesinde taşınma sürecimiz sorunsuz geçti."
+    },
+    {
+      "author": "ÇBN Çoban",
+      "location": "İstanbul",
+      "service": "Evden Eve Nakliyat",
+      "rating": 5,
+      "text": "Geçen hafta BGC Nakliyat ile taşındım ve gerçekten çok memnun kaldım. Eşyalarımı büyük bir özenle ve güvenle taşıdılar. Taşıma süreci çok hızlı ve sorunsuz ilerledi."
+    },
+    {
+      "author": "Arif Keskin",
+      "location": "İstanbul",
+      "service": "Parça Eşya Taşıma",
+      "rating": 5,
+      "text": "Parça eşya taşıma nakliye hizmetlerinden inanılmaz derecede memnun kaldım. Eşyalarım, özellikle de hassas ve kırılacak olanlar, çok dikkatli bir şekilde paketlendi ve taşındı."
+    },
+    {
+      "author": "Huseyin Çimçim",
+      "location": "Avcılar",
+      "service": "Evden Eve Nakliyat",
+      "rating": 5,
+      "text": "Avcılar’dan başka bir semte taşınma sürecimde bu nakliye firmasını tercih ettim ve son derece memnun kaldım. Ekip son derece profesyoneldi, eşyalarımı özenle taşıdı."
+    }
   ]
 }

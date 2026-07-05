@@ -48,6 +48,7 @@ export const services = [
     title: "Evden Eve Nakliyat",
     slug: "evden-eve-nakliyat",
     icon: Truck,
+    image: "/images/evden-eve-nakliyat.jpg",
     summary:
       "Eşya keşfinden yeni adrese yerleşime kadar taşınma sürecini planlı, güvenli ve hızlı şekilde yönetir.",
     details:
@@ -63,7 +64,7 @@ export const services = [
     title: "Parça Eşya Taşıma",
     slug: "parca-esya-tasima",
     icon: Boxes,
-    image: "/images/parca-esya-tasima.png",
+    image: "/images/parca-esya-tasima-guncel.jpeg",
     summary:
       "Tekli eşya, birkaç koli ya da küçük hacimli yükler için ekonomik ve pratik taşıma çözümü sunar.",
     details:
@@ -95,7 +96,7 @@ export const services = [
     title: "Asansörlü Taşıma",
     slug: "asansorlu-tasima",
     icon: Warehouse,
-    image: "/images/asansorlu-tasima.png",
+    image: "/images/asansorlu-tasima.jpg",
     summary:
       "Yüksek katlı binalarda dış cephe asansörüyle daha hızlı ve daha güvenli taşıma yapılmasına yardımcı olur.",
     details:
@@ -111,6 +112,7 @@ export const services = [
     title: "Şehirlerarası Nakliyat",
     slug: "sehirlerarasi-nakliyat",
     icon: MapPin,
+    image: "/images/sehirlerarasi-nakliyat.png",
     summary:
       "İstanbul çıkışlı şehirlerarası taşımalar için rota, paketleme ve teslimat sürecini uçtan uca planlar.",
     details:
@@ -126,7 +128,7 @@ export const services = [
     title: "Paketleme ve Sigortalı Taşıma",
     slug: "paketleme-sigortali-tasima",
     icon: PackageCheck,
-    image: "/images/paketleme-sigortali-tasima.png",
+    image: "/images/paketleme-sigortali-tasima.jpg",
     summary:
       "Kırılacak, hassas ve değerli eşyalar için doğru ambalajlama ve sigortalı taşıma güveni sağlar.",
     details:

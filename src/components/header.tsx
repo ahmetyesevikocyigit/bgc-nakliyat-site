@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Clock, MapPin, Menu, Phone, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { SiteReview } from "@/lib/google-reviews";
 import { createSlug } from "@/lib/slug";
 import { company, googleReviews, navItems } from "@/lib/site-data";
 
@@ -13,11 +14,23 @@ type HeaderProps = {
 
 export function Header({ serviceDistricts }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [reviews, setReviews] = useState<SiteReview[]>(googleReviews);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const districtLinks = serviceDistricts.map((district) => ({
     name: district,
     href: `/bolgeler/${createSlug(district)}`,
   }));
+
+  useEffect(() => {
+    fetch("/api/google-reviews")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { reviews?: SiteReview[] } | null) => {
+        if (data?.reviews?.length) {
+          setReviews(data.reviews);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!isMobileMenuOpen) {
@@ -204,7 +217,7 @@ export function Header({ serviceDistricts }: HeaderProps) {
       </div>
       <div className="mx-auto mt-2 max-w-7xl overflow-hidden rounded-full border border-white/60 bg-white/92 py-2 shadow-lg shadow-slate-950/10 backdrop-blur-xl lg:hidden">
         <div className="review-marquee flex w-max items-center gap-4 text-nowrap">
-          {[...googleReviews, ...googleReviews].map((review, index) => (
+          {[...reviews, ...reviews].map((review, index) => (
             <div
               key={`${review.author}-${index}`}
               className="inline-flex items-center gap-2 px-2 text-xs font-black text-slate-700"

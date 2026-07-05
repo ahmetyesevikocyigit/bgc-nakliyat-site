@@ -8,7 +8,9 @@ import {
   Heading2,
   Heading3,
   HelpCircle,
+  ImageIcon,
   Inbox,
+  KeyRound,
   LayoutDashboard,
   List,
   Mail,
@@ -17,20 +19,37 @@ import {
   Phone,
   Plus,
   Save,
+  Star,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { logoutAction, saveAdminContentAction } from "@/app/admin/actions";
-import type { BlogPost, EditableContent, FaqItem } from "@/lib/editable-content";
+import type {
+  BlogPost,
+  EditableContent,
+  EditableGoogleReview,
+  FaqItem,
+  SiteImageSettings,
+} from "@/lib/editable-content";
 import type { QuoteRequest } from "@/lib/quote-requests";
+import { services } from "@/lib/site-data";
 
-type AdminSection = "overview" | "requests" | "districts" | "faq" | "blog";
+type AdminSection =
+  | "overview"
+  | "requests"
+  | "images"
+  | "reviews"
+  | "districts"
+  | "faq"
+  | "blog"
+  | "settings";
 
 type AdminContentEditorProps = {
   content: EditableContent;
   quoteRequests: QuoteRequest[];
   saved?: boolean;
   hasContentError?: boolean;
+  passwordError?: string;
 };
 
 type ContentBlockType = "h2" | "h3" | "paragraph" | "list";
@@ -122,14 +141,18 @@ export function AdminContentEditor({
   quoteRequests,
   saved = false,
   hasContentError = false,
+  passwordError,
 }: AdminContentEditorProps) {
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
   const [serviceDistricts, setServiceDistricts] = useState(content.serviceDistricts);
   const [newDistrict, setNewDistrict] = useState("");
   const [faqItems, setFaqItems] = useState<FaqItem[]>(content.faqItems);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(content.blogPosts);
+  const [siteImages, setSiteImages] = useState<SiteImageSettings>(content.siteImages);
+  const [googleReviews, setGoogleReviews] = useState<EditableGoogleReview[]>(content.googleReviews);
 
   const publishedBlogCount = blogPosts.filter((post) => post.published).length;
+  const visibleReviewCount = googleReviews.filter((review) => review.author && review.text).length;
 
   const addDistrict = () => {
     const district = newDistrict.trim();
@@ -210,184 +233,331 @@ export function AdminContentEditor({
     setBlogPosts((currentPosts) => currentPosts.filter((_, postIndex) => postIndex !== index));
   };
 
+  const updateHeroImage = (value: string) => {
+    setSiteImages((currentImages) => ({ ...currentImages, heroImage: value }));
+  };
+
+  const updateServiceImage = (slug: string, value: string) => {
+    setSiteImages((currentImages) => ({
+      ...currentImages,
+      serviceImages: { ...currentImages.serviceImages, [slug]: value },
+    }));
+  };
+
+  const addGoogleReview = () => {
+    setGoogleReviews((currentReviews) => [
+      {
+        author: "Yeni Müşteri",
+        location: "İstanbul",
+        service: "Evden Eve Nakliyat",
+        rating: 5,
+        text: "",
+      },
+      ...currentReviews,
+    ]);
+    setActiveSection("reviews");
+  };
+
+  const updateGoogleReview = (
+    index: number,
+    key: keyof EditableGoogleReview,
+    value: string | number,
+  ) => {
+    setGoogleReviews((currentReviews) =>
+      currentReviews.map((review, reviewIndex) =>
+        reviewIndex === index ? { ...review, [key]: value } : review,
+      ),
+    );
+  };
+
+  const removeGoogleReview = (index: number) => {
+    setGoogleReviews((currentReviews) => currentReviews.filter((_, reviewIndex) => reviewIndex !== index));
+  };
+
+  const adminSections: Array<{
+    id: AdminSection;
+    icon: LucideIcon;
+    title: string;
+    text: string;
+    value?: string;
+  }> = [
+    {
+      id: "overview",
+      icon: LayoutDashboard,
+      title: "Genel Bakış",
+      text: "İçerik ve taleplerin hızlı özeti.",
+    },
+    {
+      id: "requests",
+      icon: Inbox,
+      title: "Teklif Talepleri",
+      text: "Formdan gelen müşteri başvuruları.",
+      value: `${quoteRequests.length}`,
+    },
+    {
+      id: "districts",
+      icon: MapPin,
+      title: "Bölgeler",
+      text: "Hizmet verilen ilçeleri düzenle.",
+      value: `${serviceDistricts.filter(Boolean).length}`,
+    },
+    {
+      id: "images",
+      icon: ImageIcon,
+      title: "Görseller",
+      text: "Hero ve hizmet fotoğrafları.",
+      value: `${services.length + 1}`,
+    },
+    {
+      id: "reviews",
+      icon: Star,
+      title: "Google Yorumları",
+      text: "Yorum ve yıldız kayıtları.",
+      value: `${visibleReviewCount}`,
+    },
+    {
+      id: "faq",
+      icon: HelpCircle,
+      title: "SSS",
+      text: "Soru ve cevap içerikleri.",
+      value: `${faqItems.filter((item) => item.question && item.answer).length}`,
+    },
+    {
+      id: "blog",
+      icon: FileText,
+      title: "Blog",
+      text: "SEO uyumlu blog yazıları.",
+      value: `${publishedBlogCount}/${blogPosts.length}`,
+    },
+    {
+      id: "settings",
+      icon: KeyRound,
+      title: "Güvenlik",
+      text: "Admin giriş şifresini değiştir.",
+    },
+  ];
+  const activeSectionMeta =
+    adminSections.find((section) => section.id === activeSection) || adminSections[0];
+  const dashboardStats = [
+    { label: "Teklif", value: quoteRequests.length, icon: Inbox },
+    { label: "İlçe", value: serviceDistricts.filter(Boolean).length, icon: MapPin },
+    { label: "Yorum", value: visibleReviewCount, icon: Star },
+    { label: "Blog", value: `${publishedBlogCount}/${blogPosts.length}`, icon: FileText },
+  ];
+
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-20 pt-32 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-cyan-300">
-            BGC Yönetim
-          </p>
-          <h1 className="mt-2 text-4xl font-black tracking-tight text-white">
-            Dashboard
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-            Teklif talepleri, hizmet bölgeleri, SSS ve blog yazıları tek panelden yönetilir.
-          </p>
-        </div>
-        <form action={logoutAction}>
-          <button
-            type="submit"
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/14 px-5 text-sm font-black text-white transition hover:bg-white/10"
-          >
-            Çıkış yap
-          </button>
-        </form>
-      </div>
-
-      {saved ? (
-        <div className="mb-6 rounded-lg border border-emerald-300/30 bg-emerald-400/12 px-5 py-4 text-sm font-bold text-emerald-100">
-          Değişiklikler kaydedildi.
-        </div>
-      ) : null}
-
-      {hasContentError ? (
-        <div className="mb-6 rounded-lg border border-orange-300/30 bg-orange-400/12 px-5 py-4 text-sm font-bold text-orange-100">
-          En az bir ilçe ve bir SSS maddesi bırakılmalı. Blog yazılarında başlık, slug, özet ve içerik dolu olmalı.
-        </div>
-      ) : null}
-
-      <form action={saveAdminContentAction} className="grid gap-6">
+    <div className="min-h-screen bg-[#eef1f0] px-3 py-3 text-slate-950 sm:px-5 lg:px-7">
+      <form action={saveAdminContentAction} className="mx-auto grid max-w-[1760px] gap-4 lg:grid-cols-[280px_1fr]">
         <input type="hidden" name="serviceDistricts" value={JSON.stringify(serviceDistricts)} />
         <input type="hidden" name="faqItems" value={JSON.stringify(faqItems)} />
         <input type="hidden" name="blogPosts" value={JSON.stringify(blogPosts)} />
+        <input type="hidden" name="siteImages" value={JSON.stringify(siteImages)} />
+        <input type="hidden" name="googleReviews" value={JSON.stringify(googleReviews)} />
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <SummaryCard
-            icon={Inbox}
-            title="Teklifler"
-            value={`${quoteRequests.length} talep`}
-            active={activeSection === "requests"}
-            onClick={() => setActiveSection("requests")}
-          />
-          <SummaryCard
-            icon={MapPin}
-            title="Bölgeler"
-            value={`${serviceDistricts.filter(Boolean).length} ilçe`}
-            active={activeSection === "districts"}
-            onClick={() => setActiveSection("districts")}
-          />
-          <SummaryCard
-            icon={HelpCircle}
-            title="SSS"
-            value={`${faqItems.filter((item) => item.question && item.answer).length} soru`}
-            active={activeSection === "faq"}
-            onClick={() => setActiveSection("faq")}
-          />
-          <SummaryCard
-            icon={FileText}
-            title="Blog"
-            value={`${publishedBlogCount}/${blogPosts.length} yayın`}
-            active={activeSection === "blog"}
-            onClick={() => setActiveSection("blog")}
-          />
-        </div>
+        <aside className="rounded-[28px] bg-white p-5 shadow-sm shadow-slate-200/80 lg:sticky lg:top-3 lg:min-h-[calc(100vh-24px)]">
+          <div className="mb-10 flex items-center gap-3">
+            <span className="grid size-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
+              <LayoutDashboard className="size-7" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-2xl font-black tracking-tight">BGC</p>
+              <p className="text-xs font-bold text-slate-400">Yönetim Paneli</p>
+            </div>
+          </div>
 
-        <div className="grid gap-6 lg:grid-cols-[280px_1fr] lg:items-start">
-          <aside className="rounded-lg border border-white/14 bg-white/10 p-3 shadow-2xl shadow-slate-950/20 backdrop-blur-2xl">
-            <SectionButton
-              icon={LayoutDashboard}
-              title="Genel Bakış"
-              text="İçerik durumunu hızlıca gör."
-              active={activeSection === "overview"}
-              onClick={() => setActiveSection("overview")}
-            />
-            <SectionButton
-              icon={Inbox}
-              title="Teklif Talepleri"
-              text="Formdan gelen başvuruları gör."
-              active={activeSection === "requests"}
-              onClick={() => setActiveSection("requests")}
-            />
-            <SectionButton
-              icon={MapPin}
-              title="Bölgeler"
-              text="İlçeleri tek tek ekle, sil veya düzenle."
-              active={activeSection === "districts"}
-              onClick={() => setActiveSection("districts")}
-            />
-            <SectionButton
-              icon={HelpCircle}
-              title="SSS"
-              text="Soruları ve cevapları yönet."
-              active={activeSection === "faq"}
-              onClick={() => setActiveSection("faq")}
-            />
-            <SectionButton
-              icon={FileText}
-              title="Blog"
-              text="Blog yazısı oluştur, taslak bırak veya yayınla."
-              active={activeSection === "blog"}
-              onClick={() => setActiveSection("blog")}
-            />
+          <p className="mb-3 px-3 text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+            Menü
+          </p>
+          <div className="grid gap-2">
+            {adminSections.map((section) => (
+              <SectionButton
+                key={section.id}
+                icon={section.icon}
+                title={section.title}
+                text={section.text}
+                value={section.value}
+                active={activeSection === section.id}
+                onClick={() => setActiveSection(section.id)}
+              />
+            ))}
+          </div>
+
+          <div className="mt-10 rounded-[24px] bg-emerald-950 p-5 text-white">
+            <p className="text-lg font-black">BGC Nakliyat</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-emerald-100/80">
+              Site içeriklerini güncel tut, ardından tek kaydet butonuyla yayına hazırla.
+            </p>
             <button
               type="submit"
-              className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-orange-500 px-5 text-sm font-black text-white shadow-lg shadow-orange-950/20 transition hover:bg-orange-600"
+              formAction={logoutAction}
+              className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-white px-5 text-sm font-black text-emerald-950 transition hover:bg-emerald-50"
             >
-              <Save className="size-4" aria-hidden="true" />
-              Değişiklikleri Kaydet
+              Çıkış Yap
             </button>
-          </aside>
+          </div>
+        </aside>
 
-          <div className="min-w-0">
-            {activeSection === "overview" ? (
-              <OverviewPanel
-                districtCount={serviceDistricts.filter(Boolean).length}
-                faqCount={faqItems.filter((item) => item.question && item.answer).length}
-                blogCount={blogPosts.length}
-                publishedBlogCount={publishedBlogCount}
-                quoteRequestCount={quoteRequests.length}
-                latestQuoteRequest={quoteRequests[0]}
-                onAddBlog={addBlogPost}
-                onAddFaq={addFaqItem}
-                onGoDistricts={() => setActiveSection("districts")}
-                onGoRequests={() => setActiveSection("requests")}
-              />
-            ) : null}
+        <main className="min-w-0 rounded-[30px] bg-[#f7f8f7] p-4 shadow-sm shadow-slate-200/80 sm:p-6">
+          <div className="mb-4 flex flex-col gap-4 rounded-[24px] bg-white p-4 shadow-sm shadow-slate-200/70 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex min-h-14 flex-1 items-center rounded-full bg-slate-50 px-5 text-sm font-semibold text-slate-400">
+              BGC Nakliyat yönetim ekranı
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="grid size-12 place-items-center rounded-full bg-slate-50 text-slate-700">
+                <Mail className="size-5" aria-hidden="true" />
+              </span>
+              <span className="grid size-12 place-items-center rounded-full bg-slate-50 text-slate-700">
+                <HelpCircle className="size-5" aria-hidden="true" />
+              </span>
+              <div className="flex items-center gap-3 rounded-full bg-slate-50 py-2 pl-2 pr-5">
+                <span className="grid size-11 place-items-center rounded-full bg-orange-100 text-lg font-black text-orange-700">
+                  B
+                </span>
+                <div>
+                  <p className="text-sm font-black text-slate-950">BGC Admin</p>
+                  <p className="text-xs font-semibold text-slate-500">admin@bgcnakliyat.com</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            {activeSection === "requests" ? (
-              <QuoteRequestsPanel quoteRequests={quoteRequests} />
-            ) : null}
+          {saved ? (
+            <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-bold text-emerald-800">
+              Değişiklikler kaydedildi.
+            </div>
+          ) : null}
 
-            {activeSection === "districts" ? (
-              <DistrictsPanel
-                districts={serviceDistricts}
-                newDistrict={newDistrict}
-                onNewDistrictChange={setNewDistrict}
-                onAddDistrict={addDistrict}
-                onUpdateDistrict={updateDistrict}
-                onRemoveDistrict={removeDistrict}
-              />
-            ) : null}
+          {hasContentError ? (
+            <div className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 text-sm font-bold text-orange-800">
+              En az bir ilçe ve bir SSS maddesi bırakılmalı. Blog yazılarında başlık, slug, özet ve içerik dolu olmalı.
+            </div>
+          ) : null}
 
-            {activeSection === "faq" ? (
-              <FaqPanel
-                faqItems={faqItems}
-                onAddFaq={addFaqItem}
-                onUpdateFaq={updateFaqItem}
-                onRemoveFaq={removeFaqItem}
-              />
-            ) : null}
+          {passwordError ? (
+            <div className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 text-sm font-bold text-orange-800">
+              {passwordError === "password-match"
+                ? "Yeni şifre ve tekrar alanı aynı olmalı."
+                : passwordError === "password-length"
+                  ? "Yeni şifre en az 8 karakter olmalı."
+                  : "Mevcut şifre doğru değil."}
+            </div>
+          ) : null}
 
-            {activeSection === "blog" ? (
-              <BlogPanel
-                blogPosts={blogPosts}
-                onAddBlog={addBlogPost}
-                onUpdateBlog={updateBlogPost}
-                onRemoveBlog={removeBlogPost}
-              />
-            ) : null}
-
-            <div className="mt-5 flex justify-end">
+          <div className="mb-4 rounded-[26px] bg-white p-6 shadow-sm shadow-slate-200/70">
+            <div className="flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
+              <div>
+                <h1 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+                  Dashboard
+                </h1>
+                <p className="mt-3 max-w-3xl text-base font-semibold leading-7 text-slate-500">
+                  {activeSectionMeta.title}: {activeSectionMeta.text}
+                </p>
+              </div>
               <button
                 type="submit"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-orange-500 px-6 text-sm font-black text-white shadow-lg shadow-orange-950/20 transition hover:bg-orange-600"
+                className="inline-flex min-h-14 shrink-0 items-center justify-center gap-2 rounded-full bg-emerald-700 px-7 text-sm font-black text-white shadow-sm shadow-emerald-200 transition hover:bg-emerald-800"
               >
                 <Save className="size-4" aria-hidden="true" />
-                Tümünü Kaydet
+                Değişiklikleri Kaydet
               </button>
             </div>
           </div>
-        </div>
+
+          <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {dashboardStats.map((stat, index) => {
+              const Icon = stat.icon;
+
+              return (
+                <div
+                  key={stat.label}
+                  className={`rounded-[24px] p-5 shadow-sm shadow-slate-200/70 ${
+                    index === 0 ? "bg-emerald-700 text-white" : "bg-white text-slate-950"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className={`text-sm font-black ${index === 0 ? "text-emerald-50" : "text-slate-700"}`}>
+                        {stat.label}
+                      </p>
+                      <p className="mt-6 text-5xl font-black tracking-tight">{stat.value}</p>
+                      <p className={`mt-4 text-xs font-bold ${index === 0 ? "text-emerald-100" : "text-emerald-700"}`}>
+                        Güncel içerik
+                      </p>
+                    </div>
+                    <span className={`grid size-11 place-items-center rounded-full ${index === 0 ? "bg-white text-emerald-800" : "border border-slate-200 text-slate-800"}`}>
+                      <Icon className="size-5" aria-hidden="true" />
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {activeSection === "overview" ? (
+            <OverviewPanel
+              districtCount={serviceDistricts.filter(Boolean).length}
+              faqCount={faqItems.filter((item) => item.question && item.answer).length}
+              blogCount={blogPosts.length}
+              publishedBlogCount={publishedBlogCount}
+              quoteRequestCount={quoteRequests.length}
+              latestQuoteRequest={quoteRequests[0]}
+              reviewCount={visibleReviewCount}
+              onGoRequests={() => setActiveSection("requests")}
+            />
+          ) : null}
+
+          {activeSection === "requests" ? (
+            <QuoteRequestsPanel quoteRequests={quoteRequests} />
+          ) : null}
+
+          {activeSection === "districts" ? (
+            <DistrictsPanel
+              districts={serviceDistricts}
+              newDistrict={newDistrict}
+              onNewDistrictChange={setNewDistrict}
+              onAddDistrict={addDistrict}
+              onUpdateDistrict={updateDistrict}
+              onRemoveDistrict={removeDistrict}
+            />
+          ) : null}
+
+          {activeSection === "images" ? (
+            <ImagesPanel
+              siteImages={siteImages}
+              onUpdateHeroImage={updateHeroImage}
+              onUpdateServiceImage={updateServiceImage}
+            />
+          ) : null}
+
+          {activeSection === "reviews" ? (
+            <ReviewsPanel
+              reviews={googleReviews}
+              onAddReview={addGoogleReview}
+              onUpdateReview={updateGoogleReview}
+              onRemoveReview={removeGoogleReview}
+            />
+          ) : null}
+
+          {activeSection === "faq" ? (
+            <FaqPanel
+              faqItems={faqItems}
+              onAddFaq={addFaqItem}
+              onUpdateFaq={updateFaqItem}
+              onRemoveFaq={removeFaqItem}
+            />
+          ) : null}
+
+          {activeSection === "blog" ? (
+            <BlogPanel
+              blogPosts={blogPosts}
+              onAddBlog={addBlogPost}
+              onUpdateBlog={updateBlogPost}
+              onRemoveBlog={removeBlogPost}
+            />
+          ) : null}
+
+          {activeSection === "settings" ? <PasswordPanel /> : null}
+        </main>
       </form>
     </div>
   );
@@ -400,9 +570,7 @@ type OverviewPanelProps = {
   publishedBlogCount: number;
   quoteRequestCount: number;
   latestQuoteRequest?: QuoteRequest;
-  onAddBlog: () => void;
-  onAddFaq: () => void;
-  onGoDistricts: () => void;
+  reviewCount: number;
   onGoRequests: () => void;
 };
 
@@ -413,16 +581,14 @@ function OverviewPanel({
   publishedBlogCount,
   quoteRequestCount,
   latestQuoteRequest,
-  onAddBlog,
-  onAddFaq,
-  onGoDistricts,
+  reviewCount,
   onGoRequests,
 }: OverviewPanelProps) {
   return (
-    <section className="rounded-lg border border-white/14 bg-white/10 p-5 shadow-2xl shadow-slate-950/20 backdrop-blur-2xl sm:p-6">
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80  sm:p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-black tracking-tight text-white">Genel Bakış</h2>
-        <p className="mt-1 text-sm font-bold text-slate-300">
+        <h2 className="text-2xl font-black tracking-tight text-slate-950">Genel Bakış</h2>
+        <p className="mt-1 text-sm font-bold text-slate-600">
           Site içeriğinin hızlı durumu ve sık kullanılan işlemler.
         </p>
       </div>
@@ -430,43 +596,39 @@ function OverviewPanel({
         {[
           { label: "Teklif talebi", value: quoteRequestCount, text: "Ücretsiz teklif formundan gelen kayıtlar" },
           { label: "Hizmet bölgesi", value: districtCount, text: "Bölgeler sayfası ve ana sayfa şeridi" },
+          { label: "Görsel alanı", value: services.length + 1, text: "Hero ve hizmet fotoğrafları" },
+          { label: "Google yorumu", value: reviewCount, text: "Slider ve yorum alanlarında görünen kayıtlar" },
           { label: "SSS maddesi", value: faqCount, text: "Ana sayfadaki soru-cevap alanı" },
           { label: "Blog yazısı", value: blogCount, text: "Toplam kayıt" },
           { label: "Yayındaki blog", value: publishedBlogCount, text: "Blog sayfasında görünen yazılar" },
         ].map((item) => (
-          <div key={item.label} className="rounded-lg border border-white/12 bg-slate-950/32 p-5">
-            <p className="text-sm font-black uppercase tracking-[0.14em] text-cyan-200">{item.label}</p>
-            <p className="mt-3 text-4xl font-black text-white">{item.value}</p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">{item.text}</p>
+          <div key={item.label} className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+            <p className="text-sm font-black uppercase tracking-[0.14em] text-emerald-700">{item.label}</p>
+            <p className="mt-3 text-4xl font-black text-slate-950">{item.value}</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">{item.text}</p>
           </div>
         ))}
       </div>
       {latestQuoteRequest ? (
-        <div className="mt-6 rounded-lg border border-cyan-200/20 bg-cyan-300/10 p-5">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">
+        <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-5">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
             Son Teklif Talebi
           </p>
           <div className="mt-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
-              <p className="text-xl font-black text-white">{latestQuoteRequest.fullName}</p>
-              <p className="mt-1 text-sm font-semibold text-slate-300">{latestQuoteRequest.service}</p>
+              <p className="text-xl font-black text-slate-950">{latestQuoteRequest.fullName}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-600">{latestQuoteRequest.service}</p>
             </div>
             <button
               type="button"
               onClick={onGoRequests}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-cyan-200/35 px-4 text-sm font-black text-cyan-100 transition hover:bg-cyan-300/14"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-emerald-200 px-4 text-sm font-black text-emerald-700 transition hover:bg-emerald-50"
             >
               Talepleri Gör
             </button>
           </div>
         </div>
       ) : null}
-      <div className="mt-6 grid gap-3 sm:grid-cols-4">
-        <QuickAction icon={Inbox} title="Talepleri Gör" onClick={onGoRequests} />
-        <QuickAction icon={FileText} title="Blog Yazısı Ekle" onClick={onAddBlog} />
-        <QuickAction icon={HelpCircle} title="SSS Ekle" onClick={onAddFaq} />
-        <QuickAction icon={MapPin} title="Bölgeleri Düzenle" onClick={onGoDistricts} />
-      </div>
     </section>
   );
 }
@@ -498,14 +660,14 @@ function getWhatsappNumber(phone: string) {
 
 function QuoteRequestsPanel({ quoteRequests }: QuoteRequestsPanelProps) {
   return (
-    <section className="rounded-lg border border-white/14 bg-white/10 p-5 shadow-2xl shadow-slate-950/20 backdrop-blur-2xl sm:p-6">
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80  sm:p-6">
       <PanelHeader
         title="Teklif Talepleri"
         text="Ücretsiz teklif formundan gelen başvurular burada en yeniden eskiye listelenir."
       />
 
       {quoteRequests.length === 0 ? (
-        <div className="mt-5 rounded-lg border border-dashed border-white/18 bg-slate-950/32 p-6 text-sm font-semibold leading-7 text-slate-300">
+        <div className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm font-semibold leading-7 text-slate-600">
           Henüz teklif talebi yok. Form gönderildiğinde kayıtlar bu alanda görünecek.
         </div>
       ) : (
@@ -518,50 +680,50 @@ function QuoteRequestsPanel({ quoteRequests }: QuoteRequestsPanelProps) {
             return (
               <article
                 key={request.id}
-                className="rounded-lg border border-white/12 bg-slate-950/35 p-4"
+                className="rounded-lg border border-slate-200 bg-slate-50 p-4"
               >
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="grid size-10 place-items-center rounded-lg bg-orange-400/14 text-orange-100">
+                      <span className="grid size-10 place-items-center rounded-lg bg-orange-50 text-orange-700">
                         <MessageSquareText className="size-5" aria-hidden="true" />
                       </span>
                       <div>
-                        <h3 className="text-xl font-black text-white">{request.fullName}</h3>
-                        <p className="text-sm font-bold text-cyan-100">{request.service}</p>
+                        <h3 className="text-xl font-black text-slate-950">{request.fullName}</h3>
+                        <p className="text-sm font-bold text-emerald-700">{request.service}</p>
                       </div>
                     </div>
                     {request.message ? (
-                      <p className="mt-4 rounded-lg border border-white/10 bg-white/6 p-4 text-sm font-semibold leading-7 text-slate-300">
+                      <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm font-semibold leading-7 text-slate-600">
                         {request.message}
                       </p>
                     ) : null}
                   </div>
 
-                  <div className="grid shrink-0 gap-2 text-sm font-bold text-slate-300">
+                  <div className="grid shrink-0 gap-2 text-sm font-bold text-slate-600">
                     <span className="inline-flex items-center gap-2">
-                      <CalendarClock className="size-4 text-cyan-200" aria-hidden="true" />
+                      <CalendarClock className="size-4 text-emerald-700" aria-hidden="true" />
                       {formatRequestDate(request.createdAt)}
                     </span>
                     <a
                       href={`tel:${request.phone.replace(/\s+/g, "")}`}
-                      className="inline-flex items-center gap-2 text-white transition hover:text-orange-200"
+                      className="inline-flex items-center gap-2 text-slate-950 transition hover:text-orange-200"
                     >
-                      <Phone className="size-4 text-orange-200" aria-hidden="true" />
+                      <Phone className="size-4 text-orange-600" aria-hidden="true" />
                       {request.phone}
                     </a>
                     <a
                       href={`mailto:${request.email}`}
-                      className="inline-flex items-center gap-2 text-white transition hover:text-cyan-100"
+                      className="inline-flex items-center gap-2 text-slate-950 transition hover:text-emerald-700"
                     >
-                      <Mail className="size-4 text-cyan-200" aria-hidden="true" />
+                      <Mail className="size-4 text-emerald-700" aria-hidden="true" />
                       {request.email}
                     </a>
                     <a
                       href={`https://wa.me/${getWhatsappNumber(request.phone)}?text=${whatsappText}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-2 inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-500 px-4 text-sm font-black text-white transition hover:bg-emerald-600"
+                      className="mt-2 inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-black text-white transition hover:bg-emerald-700"
                     >
                       WhatsApp ile Dön
                     </a>
@@ -572,6 +734,332 @@ function QuoteRequestsPanel({ quoteRequests }: QuoteRequestsPanelProps) {
           })}
         </div>
       )}
+    </section>
+  );
+}
+
+function PasswordPanel() {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80 sm:p-6">
+      <PanelHeader
+        title="Admin Şifresi"
+        text="Panel giriş şifresini buradan değiştirebilirsin. Alanları boş bırakırsan şifre değişmez."
+      />
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-5">
+          <div className="grid size-12 place-items-center rounded-2xl bg-white text-emerald-700 shadow-sm">
+            <KeyRound className="size-6" aria-hidden="true" />
+          </div>
+          <h3 className="mt-5 text-xl font-black text-slate-950">Güvenli erişim</h3>
+          <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">
+            İlk giriş şifresi <span className="font-black text-slate-950">bgcnakliyat1*</span>.
+            Şifre değişince yeni değer güvenli hash olarak kalıcı storage’a kaydedilir.
+          </p>
+        </div>
+
+        <div className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
+          <label className="grid gap-2">
+            <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+              Mevcut Şifre
+            </span>
+            <input
+              name="currentPassword"
+              type="password"
+              autoComplete="current-password"
+              className="min-h-12 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
+            />
+          </label>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2">
+              <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                Yeni Şifre
+              </span>
+              <input
+                name="newPassword"
+                type="password"
+                autoComplete="new-password"
+                className="min-h-12 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
+              />
+            </label>
+
+            <label className="grid gap-2">
+              <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                Yeni Şifre Tekrar
+              </span>
+              <input
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                className="min-h-12 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
+              />
+            </label>
+          </div>
+
+          <p className="text-xs font-semibold leading-5 text-slate-500">
+            Değiştirmek için mevcut şifreyi ve yeni şifreyi girip üstteki “Değişiklikleri Kaydet”
+            butonuna bas.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+type ImagesPanelProps = {
+  siteImages: SiteImageSettings;
+  onUpdateHeroImage: (value: string) => void;
+  onUpdateServiceImage: (slug: string, value: string) => void;
+};
+
+function getDefaultServiceImage(service: (typeof services)[number]) {
+  return "image" in service && service.image ? service.image : "/images/bgc-nakliyat-hero.png";
+}
+
+function ImagesPanel({
+  siteImages,
+  onUpdateHeroImage,
+  onUpdateServiceImage,
+}: ImagesPanelProps) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80  sm:p-6">
+      <PanelHeader
+        title="Site Görselleri"
+        text="Hero alanı ve hizmet kartlarındaki görselleri buradan güncelleyebilirsin."
+      />
+
+      <div className="mt-5 grid gap-5">
+        <ImageEditorCard
+          title="Ana Sayfa Hero Görseli"
+          description="Siteye girince ilk görünen büyük karşılama fotoğrafı."
+          imagePath={siteImages.heroImage}
+          fileInputName="heroImageFile"
+          onImagePathChange={onUpdateHeroImage}
+          onReset={() => onUpdateHeroImage("/images/sehirlerarasi-nakliyat.png")}
+        />
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          {services.map((service) => {
+            const imagePath = siteImages.serviceImages[service.slug] || getDefaultServiceImage(service);
+
+            return (
+              <ImageEditorCard
+                key={service.slug}
+                title={service.title}
+                description="Bu görsel ana sayfadaki ve hizmetler sayfasındaki hizmet kartlarında kullanılır."
+                imagePath={imagePath}
+                fileInputName={`serviceImageFile-${service.slug}`}
+                onImagePathChange={(value) => onUpdateServiceImage(service.slug, value)}
+                onReset={() => onUpdateServiceImage(service.slug, getDefaultServiceImage(service))}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+type ImageEditorCardProps = {
+  title: string;
+  description: string;
+  imagePath: string;
+  fileInputName: string;
+  onImagePathChange: (value: string) => void;
+  onReset: () => void;
+};
+
+function ImageEditorCard({
+  title,
+  description,
+  imagePath,
+  fileInputName,
+  onImagePathChange,
+  onReset,
+}: ImageEditorCardProps) {
+  return (
+    <article className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-[220px_1fr]">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+        {imagePath ? (
+          <img
+            src={imagePath}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="grid h-full place-items-center text-sm font-black text-slate-500">
+            Görsel yok
+          </div>
+        )}
+      </div>
+
+      <div className="min-w-0">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+          <div>
+            <h3 className="text-lg font-black text-slate-950">{title}</h3>
+            <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+              {description}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onReset}
+            className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full border border-slate-200 px-4 text-xs font-black text-slate-700 transition hover:bg-slate-100"
+          >
+            Varsayılana Dön
+          </button>
+        </div>
+
+        <label className="mt-4 grid gap-2">
+          <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+            Görsel Yolu
+          </span>
+          <input
+            value={imagePath}
+            onChange={(event) => onImagePathChange(event.target.value)}
+            placeholder="/images/ornek.jpg"
+            className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition placeholder:text-slate-500 focus:border-emerald-400"
+          />
+        </label>
+
+        <label className="mt-4 grid gap-2">
+          <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+            Bilgisayardan Görsel Yükle
+          </span>
+          <input
+            name={fileInputName}
+            type="file"
+            accept="image/*"
+            className="block w-full rounded-lg border border-dashed border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-orange-500 file:px-4 file:py-2 file:text-sm file:font-black file:text-white hover:file:bg-orange-600"
+          />
+          <span className="text-xs font-semibold leading-5 text-slate-500">
+            Dosya seçip kaydedersen site otomatik yeni yüklenen görseli kullanır.
+          </span>
+        </label>
+      </div>
+    </article>
+  );
+}
+
+type ReviewsPanelProps = {
+  reviews: EditableGoogleReview[];
+  onAddReview: () => void;
+  onUpdateReview: (index: number, key: keyof EditableGoogleReview, value: string | number) => void;
+  onRemoveReview: (index: number) => void;
+};
+
+function ReviewsPanel({
+  reviews,
+  onAddReview,
+  onUpdateReview,
+  onRemoveReview,
+}: ReviewsPanelProps) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80  sm:p-6">
+      <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <PanelHeader
+          title="Google Yorumları"
+          text="Google’dan kopyaladığın yorumları buraya ekleyebilir, sırasını ve metnini düzenleyebilirsin."
+        />
+        <button
+          type="button"
+          onClick={onAddReview}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-5 text-sm font-black text-emerald-700 transition hover:bg-emerald-100"
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          Yeni Yorum
+        </button>
+      </div>
+
+      <div className="mb-5 rounded-lg border border-orange-200/20 bg-orange-50 p-4 text-sm font-semibold leading-7 text-orange-800">
+        Bu alan API kullanmadan çalışır. Google’daki yorumu kopyalayıp buraya eklediğinde
+        hero, mobil üst şerit ve müşteri deneyimleri alanlarında bu kayıtlar görünür.
+      </div>
+
+      <div className="grid gap-4">
+        {reviews.map((review, index) => (
+          <article key={`${review.author}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-emerald-700">Yorum {index + 1}</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">
+                  {review.author || "İsimsiz müşteri"} · {review.rating || 5} yıldız
+                </p>
+              </div>
+              <IconButton label={`${index + 1}. yorumu sil`} onClick={() => onRemoveReview(index)} />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="grid gap-2">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                  Müşteri Adı
+                </span>
+                <input
+                  value={review.author}
+                  onChange={(event) => onUpdateReview(index, "author", event.target.value)}
+                  className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
+                  placeholder="Örn. Semanur T."
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                  Konum / Zaman
+                </span>
+                <input
+                  value={review.location}
+                  onChange={(event) => onUpdateReview(index, "location", event.target.value)}
+                  className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
+                  placeholder="Örn. Avcılar - Esenyurt"
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                  Hizmet
+                </span>
+                <input
+                  value={review.service}
+                  onChange={(event) => onUpdateReview(index, "service", event.target.value)}
+                  className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
+                  placeholder="Örn. Parça Eşya Taşıma"
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                  Yıldız
+                </span>
+                <select
+                  value={review.rating}
+                  onChange={(event) => onUpdateReview(index, "rating", Number(event.target.value))}
+                  className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
+                >
+                  {[5, 4, 3, 2, 1].map((rating) => (
+                    <option key={rating} value={rating}>
+                      {rating} Yıldız
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <label className="mt-4 grid gap-2">
+              <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                Yorum Metni
+              </span>
+              <textarea
+                value={review.text}
+                onChange={(event) => onUpdateReview(index, "text", event.target.value)}
+                rows={5}
+                className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-7 text-slate-950 outline-none transition focus:border-emerald-400"
+                placeholder="Google yorum metnini buraya yapıştır..."
+              />
+            </label>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
@@ -594,7 +1082,7 @@ function DistrictsPanel({
   onRemoveDistrict,
 }: DistrictsPanelProps) {
   return (
-    <section className="rounded-lg border border-white/14 bg-white/10 p-5 shadow-2xl shadow-slate-950/20 backdrop-blur-2xl sm:p-6">
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80  sm:p-6">
       <PanelHeader
         title="Hizmet Verilen İlçeler"
         text="Her satır ayrı bir bölgedir. İstediğini düzenleyebilir veya silebilirsin."
@@ -610,12 +1098,12 @@ function DistrictsPanel({
             }
           }}
           placeholder="Yeni ilçe adı"
-          className="min-h-12 rounded-lg border border-white/14 bg-slate-950/45 px-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-200"
+          className="min-h-12 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition placeholder:text-slate-500 focus:border-emerald-400"
         />
         <button
           type="button"
           onClick={onAddDistrict}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-cyan-200/35 bg-cyan-300/10 px-5 text-sm font-black text-cyan-100 transition hover:bg-cyan-300/18"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-5 text-sm font-black text-emerald-700 transition hover:bg-emerald-100"
         >
           <Plus className="size-4" aria-hidden="true" />
           İlçe Ekle
@@ -625,19 +1113,19 @@ function DistrictsPanel({
         {districts.map((district, index) => (
           <div
             key={`${district}-${index}`}
-            className="grid gap-3 rounded-lg border border-white/12 bg-slate-950/35 p-3 sm:grid-cols-[auto_1fr_auto] sm:items-center"
+            className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:grid-cols-[auto_1fr_auto] sm:items-center"
           >
-            <div className="grid size-10 place-items-center rounded-lg bg-cyan-300/12 text-cyan-100">
+            <div className="grid size-10 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
               <MapPin className="size-4" aria-hidden="true" />
             </div>
             <label className="grid gap-1">
-              <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+              <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
                 İlçe {index + 1}
               </span>
               <input
                 value={district}
                 onChange={(event) => onUpdateDistrict(index, event.target.value)}
-                className="min-h-11 rounded-lg border border-white/14 bg-slate-950/45 px-4 text-sm font-bold text-white outline-none transition focus:border-cyan-200"
+                className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
               />
             </label>
             <IconButton
@@ -660,13 +1148,13 @@ type FaqPanelProps = {
 
 function FaqPanel({ faqItems, onAddFaq, onUpdateFaq, onRemoveFaq }: FaqPanelProps) {
   return (
-    <section className="rounded-lg border border-white/14 bg-white/10 p-5 shadow-2xl shadow-slate-950/20 backdrop-blur-2xl sm:p-6">
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80  sm:p-6">
       <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <PanelHeader title="Sık Sorulan Sorular" text="Soru cevaplarını tek tek düzenleyebilirsin." />
         <button
           type="button"
           onClick={onAddFaq}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-cyan-200/35 bg-cyan-300/10 px-5 text-sm font-black text-cyan-100 transition hover:bg-cyan-300/18"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-5 text-sm font-black text-emerald-700 transition hover:bg-emerald-100"
         >
           <Plus className="size-4" aria-hidden="true" />
           Yeni Soru
@@ -674,30 +1162,30 @@ function FaqPanel({ faqItems, onAddFaq, onUpdateFaq, onRemoveFaq }: FaqPanelProp
       </div>
       <div className="grid gap-4">
         {faqItems.map((item, index) => (
-          <div key={index} className="rounded-lg border border-white/12 bg-slate-950/35 p-4">
+          <div key={index} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-sm font-black text-slate-300">SSS {index + 1}</p>
+              <p className="text-sm font-black text-slate-600">SSS {index + 1}</p>
               <IconButton label={`${index + 1}. soruyu sil`} onClick={() => onRemoveFaq(index)} />
             </div>
             <label className="grid gap-2">
-              <span className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">
+              <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
                 Soru
               </span>
               <input
                 value={item.question}
                 onChange={(event) => onUpdateFaq(index, "question", event.target.value)}
-                className="min-h-11 rounded-lg border border-white/14 bg-slate-950/45 px-4 text-sm font-bold text-white outline-none transition focus:border-cyan-200"
+                className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
               />
             </label>
             <label className="mt-4 grid gap-2">
-              <span className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">
+              <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
                 Cevap
               </span>
               <textarea
                 value={item.answer}
                 onChange={(event) => onUpdateFaq(index, "answer", event.target.value)}
                 rows={4}
-                className="w-full resize-y rounded-lg border border-white/14 bg-slate-950/45 px-4 py-3 text-sm font-semibold leading-7 text-white outline-none transition focus:border-cyan-200"
+                className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-7 text-slate-950 outline-none transition focus:border-emerald-400"
               />
             </label>
           </div>
@@ -752,7 +1240,7 @@ function BlogPanel({ blogPosts, onAddBlog, onUpdateBlog, onRemoveBlog }: BlogPan
   };
 
   return (
-    <section className="rounded-lg border border-white/14 bg-white/10 p-5 shadow-2xl shadow-slate-950/20 backdrop-blur-2xl sm:p-6">
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80  sm:p-6">
       <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <PanelHeader
           title="Blog Yazıları"
@@ -761,7 +1249,7 @@ function BlogPanel({ blogPosts, onAddBlog, onUpdateBlog, onRemoveBlog }: BlogPan
         <button
           type="button"
           onClick={onAddBlog}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-cyan-200/35 bg-cyan-300/10 px-5 text-sm font-black text-cyan-100 transition hover:bg-cyan-300/18"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-5 text-sm font-black text-emerald-700 transition hover:bg-emerald-100"
         >
           <Plus className="size-4" aria-hidden="true" />
           Yeni Yazı
@@ -769,21 +1257,21 @@ function BlogPanel({ blogPosts, onAddBlog, onUpdateBlog, onRemoveBlog }: BlogPan
       </div>
       <div className="grid gap-5">
         {blogPosts.map((post, index) => (
-          <div key={`${post.slug}-${index}`} className="rounded-lg border border-white/12 bg-slate-950/35 p-4">
+          <div key={`${post.slug}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
               <div className="flex items-center gap-3">
-                <span className="grid size-10 place-items-center rounded-lg bg-cyan-300/12 text-cyan-100">
+                <span className="grid size-10 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
                   <FileText className="size-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="text-sm font-black text-white">Blog {index + 1}</p>
-                  <p className="text-xs font-bold text-slate-400">
+                  <p className="text-sm font-black text-slate-950">Blog {index + 1}</p>
+                  <p className="text-xs font-bold text-slate-500">
                     {post.published ? "Yayında" : "Taslak"}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <label className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 text-sm font-black text-white">
+                <label className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-black text-slate-950">
                   <input
                     type="checkbox"
                     checked={post.published}
@@ -826,27 +1314,27 @@ function BlogPanel({ blogPosts, onAddBlog, onUpdateBlog, onRemoveBlog }: BlogPan
                 onChange={(value) => onUpdateBlog(index, "seoTitle", value)}
               />
               <label className="grid gap-2">
-                <span className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
                   Meta Açıklama ({post.seoDescription.length}/160)
                 </span>
                 <textarea
                   value={post.seoDescription}
                   onChange={(event) => onUpdateBlog(index, "seoDescription", event.target.value)}
                   rows={3}
-                  className="w-full resize-y rounded-lg border border-white/14 bg-slate-950/45 px-4 py-3 text-sm font-semibold leading-7 text-white outline-none transition focus:border-cyan-200"
+                  className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-7 text-slate-950 outline-none transition focus:border-emerald-400"
                 />
               </label>
             </div>
 
             <SeoFitPanel post={post} blocks={parseContentBlocks(post.content)} />
 
-            <div className="mt-4 rounded-lg border border-white/12 bg-slate-950/28 p-4">
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
                     İçerik Blokları
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-slate-400">
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
                     H1 blog başlığıdır. İçerikte H2, H3, paragraf ve liste blokları eklenir.
                   </p>
                 </div>
@@ -888,7 +1376,7 @@ function BlogPanel({ blogPosts, onAddBlog, onUpdateBlog, onRemoveBlog }: BlogPan
                     />
                   ))
                 ) : (
-                  <div className="rounded-lg border border-dashed border-white/18 bg-white/6 p-5 text-sm font-semibold leading-7 text-slate-300">
+                  <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold leading-7 text-slate-600">
                     Henüz içerik bloğu yok. H2 ve paragraf ekleyerek yazıyı oluşturmaya başlayabilirsin.
                   </div>
                 )}
@@ -932,17 +1420,17 @@ function SeoFitPanel({ post, blocks }: SeoFitPanelProps) {
   ];
 
   return (
-    <div className="mt-4 rounded-lg border border-white/12 bg-white/8 p-4">
+    <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
       <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
             SEO Uygunluğu
           </p>
-          <p className="mt-1 text-xs font-semibold text-slate-400">
+          <p className="mt-1 text-xs font-semibold text-slate-500">
             Başlık yapısı, meta alanları ve içerik uzunluğu hızlı kontrol edilir.
           </p>
         </div>
-        <span className="rounded-full border border-white/14 bg-slate-950/32 px-3 py-1 text-xs font-black text-white">
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-950">
           {checks.filter((check) => check.isGood).length}/{checks.length}
         </span>
       </div>
@@ -952,8 +1440,8 @@ function SeoFitPanel({ post, blocks }: SeoFitPanelProps) {
             key={check.label}
             className={`rounded-full border px-3 py-1 text-xs font-black ${
               check.isGood
-                ? "border-emerald-300/30 bg-emerald-400/12 text-emerald-100"
-                : "border-orange-300/30 bg-orange-400/12 text-orange-100"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-orange-300/30 bg-orange-50 text-orange-700"
             }`}
           >
             {check.isGood ? "Uygun" : "Eksik"}: {check.label}
@@ -1006,17 +1494,17 @@ function ContentBlockEditor({ block, index, onChange, onRemove }: ContentBlockEd
   const isHeading = block.type === "h2" || block.type === "h3";
 
   return (
-    <div className="rounded-lg border border-white/12 bg-slate-950/42 p-4">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-lg bg-cyan-300/12 text-cyan-100">
+          <span className="grid size-10 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
             <Icon className="size-5" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-sm font-black text-white">
+            <p className="text-sm font-black text-slate-950">
               Blok {index + 1}: {config.label}
             </p>
-            <p className="text-xs font-semibold text-slate-400">{config.hint}</p>
+            <p className="text-xs font-semibold text-slate-500">{config.hint}</p>
           </div>
         </div>
         <IconButton label={`${index + 1}. içerik bloğunu sil`} onClick={onRemove} />
@@ -1025,14 +1513,14 @@ function ContentBlockEditor({ block, index, onChange, onRemove }: ContentBlockEd
         <input
           value={block.value}
           onChange={(event) => onChange(event.target.value)}
-          className="min-h-11 w-full rounded-lg border border-white/14 bg-slate-950/45 px-4 text-sm font-bold text-white outline-none transition focus:border-cyan-200"
+          className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
         />
       ) : (
         <textarea
           value={block.value}
           onChange={(event) => onChange(event.target.value)}
           rows={config.rows}
-          className="w-full resize-y rounded-lg border border-white/14 bg-slate-950/45 px-4 py-3 text-sm font-semibold leading-7 text-white outline-none transition focus:border-cyan-200"
+          className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-7 text-slate-950 outline-none transition focus:border-emerald-400"
         />
       )}
     </div>
@@ -1044,7 +1532,7 @@ function EditorToolButton({ icon: Icon, label, onClick }: EditorToolButtonProps)
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/14 bg-white/8 px-3 text-xs font-black text-white transition hover:bg-white/14"
+      className="inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-black text-slate-950 transition hover:bg-slate-100"
     >
       <Icon className="size-3.5" aria-hidden="true" />
       {label}
@@ -1062,12 +1550,12 @@ type TextInputProps = {
 function TextInput({ label, value, type = "text", onChange }: TextInputProps) {
   return (
     <label className="grid gap-2">
-      <span className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">{label}</span>
+      <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">{label}</span>
       <input
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 rounded-lg border border-white/14 bg-slate-950/45 px-4 text-sm font-bold text-white outline-none transition focus:border-cyan-200"
+        className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
       />
     </label>
   );
@@ -1081,28 +1569,9 @@ type PanelHeaderProps = {
 function PanelHeader({ title, text }: PanelHeaderProps) {
   return (
     <div>
-      <h2 className="text-2xl font-black tracking-tight text-white">{title}</h2>
-      <p className="mt-1 text-sm font-bold text-slate-300">{text}</p>
+      <h2 className="text-2xl font-black tracking-tight text-slate-950">{title}</h2>
+      <p className="mt-1 text-sm font-bold text-slate-600">{text}</p>
     </div>
-  );
-}
-
-type QuickActionProps = {
-  icon: LucideIcon;
-  title: string;
-  onClick: () => void;
-};
-
-function QuickAction({ icon: Icon, title, onClick }: QuickActionProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/14 bg-white/8 px-4 text-sm font-black text-white transition hover:bg-white/14"
-    >
-      <Icon className="size-4" aria-hidden="true" />
-      {title}
-    </button>
   );
 }
 
@@ -1116,7 +1585,7 @@ function IconButton({ label, onClick }: IconButtonProps) {
     <button
       type="button"
       onClick={onClick}
-      className="grid size-10 shrink-0 place-items-center rounded-full border border-white/12 text-slate-300 transition hover:bg-white/10 hover:text-white"
+      className="grid size-10 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-600 transition hover:bg-white hover:text-slate-950"
       aria-label={label}
       title="Sil"
     >
@@ -1129,60 +1598,40 @@ type SectionButtonProps = {
   icon: LucideIcon;
   title: string;
   text: string;
+  value?: string;
   active: boolean;
   onClick: () => void;
 };
 
-function SectionButton({ icon: Icon, title, text, active, onClick }: SectionButtonProps) {
+function SectionButton({ icon: Icon, title, text, value, active, onClick }: SectionButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`mb-2 flex w-full gap-3 rounded-lg border p-4 text-left transition ${
+      className={`flex w-full gap-3 rounded-xl border p-3 text-left transition ${
         active
-          ? "border-cyan-200/45 bg-cyan-300/14 text-white"
-          : "border-white/10 bg-slate-950/24 text-slate-300 hover:bg-white/8 hover:text-white"
+          ? "border-emerald-300 bg-emerald-50 text-slate-950"
+          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-950"
       }`}
     >
-      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white/10 text-cyan-100">
+      <span
+        className={`grid size-10 shrink-0 place-items-center rounded-xl ${
+          active ? "bg-emerald-700 text-white" : "bg-white text-emerald-700"
+        }`}
+      >
         <Icon className="size-5" aria-hidden="true" />
       </span>
-      <span>
-        <span className="block text-sm font-black">{title}</span>
-        <span className="mt-1 block text-xs font-semibold leading-5 text-slate-400">{text}</span>
-      </span>
-    </button>
-  );
-}
-
-type SummaryCardProps = {
-  icon: LucideIcon;
-  title: string;
-  value: string;
-  active: boolean;
-  onClick: () => void;
-};
-
-function SummaryCard({ icon: Icon, title, value, active, onClick }: SummaryCardProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-lg border p-5 text-left shadow-2xl shadow-slate-950/16 backdrop-blur-2xl transition ${
-        active
-          ? "border-cyan-200/45 bg-cyan-300/14"
-          : "border-white/14 bg-white/10 hover:bg-white/14"
-      }`}
-    >
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-black uppercase tracking-[0.16em] text-slate-300">{title}</p>
-          <p className="mt-2 text-3xl font-black tracking-tight text-white">{value}</p>
-        </div>
-        <span className="grid size-12 place-items-center rounded-lg bg-white/10 text-cyan-100">
-          <Icon className="size-6" aria-hidden="true" />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-3">
+          <span className="truncate text-sm font-black">{title}</span>
+          {value ? (
+            <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-black text-slate-500">
+              {value}
+            </span>
+          ) : null}
         </span>
-      </div>
+        <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{text}</span>
+      </span>
     </button>
   );
 }

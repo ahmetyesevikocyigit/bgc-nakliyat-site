@@ -16,8 +16,20 @@ import { company, featureItems, services } from "@/lib/site-data";
 
 export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const { faqItems, serviceDistricts } = getEditableContent();
+export default async function Home() {
+  const { faqItems, serviceDistricts, siteImages } = await getEditableContent();
+  const managedServices = services.map((service) => ({
+    ...service,
+    image: siteImages.serviceImages[service.slug] || service.image,
+  }));
+  const heroSlidePaths = [
+    siteImages.heroImage,
+    ...managedServices.map((service) => service.image).filter(Boolean),
+  ];
+  const heroSlides = Array.from(new Set(heroSlidePaths)).map((imagePath) => ({
+    src: imagePath,
+    alt: `${company.name} nakliyat görseli`,
+  }));
 
   return (
     <>
@@ -45,14 +57,14 @@ export default function Home() {
           </div>
           <div className="relative min-h-[420px] overflow-hidden rounded-[2rem] bg-slate-950 shadow-2xl shadow-slate-950/20 sm:min-h-[520px] lg:rounded-[2.6rem]">
             <div className="lg:hidden">
-              <HeroPhotoSlider />
+              <HeroPhotoSlider slides={heroSlides} />
             </div>
             <Image
-              src="/images/bgc-nakliyat-hero.png"
-              alt="BGC Nakliyat taşıma ekibi ve nakliye aracı"
+              src={siteImages.heroImage}
+              alt="BGC Nakliyat şehirlerarası nakliye aracı"
               fill
               priority
-              className="hidden object-cover lg:block"
+              className="hidden object-cover object-[58%_center] lg:block"
               sizes="(min-width: 1024px) 54vw, 100vw"
             />
             <div className="absolute inset-0 hidden bg-[linear-gradient(90deg,rgba(2,6,23,0.86),rgba(2,6,23,0.2)_55%,rgba(2,6,23,0.06))] lg:block" />
@@ -79,7 +91,7 @@ export default function Home() {
             Hizmetler
           </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {services.slice(0, 6).map((service) => (
+            {managedServices.slice(0, 6).map((service) => (
               <ServiceCard key={service.slug} {...service} />
             ))}
           </div>

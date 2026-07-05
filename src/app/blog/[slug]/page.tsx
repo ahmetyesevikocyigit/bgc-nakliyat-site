@@ -20,8 +20,10 @@ function formatDate(date: string) {
   }).format(new Date(date));
 }
 
-function getPost(slug: string) {
-  return getEditableContent().blogPosts.find((post) => post.slug === slug && post.published);
+async function getPost(slug: string) {
+  const { blogPosts } = await getEditableContent();
+
+  return blogPosts.find((post) => post.slug === slug && post.published);
 }
 
 function renderContentBlock(block: string) {
@@ -69,7 +71,7 @@ function renderContentBlock(block: string) {
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPost(slug);
+  const post = await getPost(slug);
 
   if (!post) {
     return { title: "Blog Yazısı Bulunamadı" };
@@ -88,7 +90,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const post = getPost(slug);
+  const post = await getPost(slug);
 
   if (!post) {
     notFound();

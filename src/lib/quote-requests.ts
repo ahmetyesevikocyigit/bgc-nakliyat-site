@@ -1,6 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
-import { join } from "node:path";
+import { readStoreJson, writeStoreJson } from "@/lib/persistent-store";
 
 export type QuoteRequest = {
   id: string;
@@ -19,8 +18,6 @@ export type QuoteRequestInput = {
   service: string;
   message?: string;
 };
-
-const quoteRequestsFilePath = join(process.cwd(), "src", "data", "quote-requests.json");
 
 function cleanText(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -42,28 +39,20 @@ function normalizeQuoteRequest(request: Partial<QuoteRequest>): QuoteRequest | n
   return { id, createdAt, fullName, email, phone, service, message };
 }
 
-export function getQuoteRequests(): QuoteRequest[] {
-  if (!existsSync(quoteRequestsFilePath)) {
+export async function getQuoteRequests(): Promise<QuoteRequest[]> {
+  const parsedValue = await readStoreJson<unknown>("quote-requests", []);
+
+  if (!Array.isArray(parsedValue)) {
     return [];
   }
 
-  try {
-    const parsedValue = JSON.parse(readFileSync(quoteRequestsFilePath, "utf8")) as unknown;
-
-    if (!Array.isArray(parsedValue)) {
-      return [];
-    }
-
-    return parsedValue
-      .map((item) => normalizeQuoteRequest(item as Partial<QuoteRequest>))
-      .filter((item): item is QuoteRequest => Boolean(item))
-      .sort((first, second) => second.createdAt.localeCompare(first.createdAt));
-  } catch {
-    return [];
-  }
+  return parsedValue
+    .map((item) => normalizeQuoteRequest(item as Partial<QuoteRequest>))
+    .filter((item): item is QuoteRequest => Boolean(item))
+    .sort((first, second) => second.createdAt.localeCompare(first.createdAt));
 }
 
-export function saveQuoteRequest(input: QuoteRequestInput) {
+export async function saveQuoteRequest(input: QuoteRequestInput) {
   const request = normalizeQuoteRequest({
     ...input,
     id: randomUUID(),
@@ -74,8 +63,8 @@ export function saveQuoteRequest(input: QuoteRequestInput) {
     throw new Error("Invalid quote request");
   }
 
-  const requests = [request, ...getQuoteRequests()].slice(0, 500);
-  writeFileSync(quoteRequestsFilePath, `${JSON.stringify(requests, null, 2)}\n`, "utf8");
+  const requests = [request, ...(await getQuoteRequests())].slice(0, 500);
+  await writeStoreJson("quote-requests", requests);
 
   return request;
 }

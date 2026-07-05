@@ -1,4 +1,4 @@
-import { googleReviews } from "@/lib/site-data";
+import { getEditableContent } from "@/lib/editable-content";
 
 export type SiteReview = {
   author: string;
@@ -40,9 +40,10 @@ type GoogleTextSearchResponse = {
 const googlePlaceQuery =
   process.env.GOOGLE_PLACE_QUERY ||
   "Bgc Nakliyat | Evden Eve Nakliyat, Mevlana, Çelebi Mehmet Cad. Marmara Park Alışveriş Merkezi No: 33A D:418, 34517 Esenyurt/İstanbul";
+const defaultGooglePlaceId = "7727899762205582080";
 
-function fallbackReviews(): SiteReview[] {
-  return googleReviews;
+async function fallbackReviews(): Promise<SiteReview[]> {
+  return (await getEditableContent()).googleReviews;
 }
 
 function normalizeReview(review: GooglePlaceReview): SiteReview | null {
@@ -115,9 +116,8 @@ export async function getGoogleReviews(): Promise<SiteReview[]> {
   }
 
   try {
-    const place = process.env.GOOGLE_PLACE_ID
-      ? await getPlaceById(apiKey, process.env.GOOGLE_PLACE_ID)
-      : await searchPlace(apiKey);
+    const googlePlaceId = process.env.GOOGLE_PLACE_ID || defaultGooglePlaceId;
+    const place = (await getPlaceById(apiKey, googlePlaceId)) || (await searchPlace(apiKey));
 
     const reviews = normalizeReviews(place?.reviews);
 

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
-import { FloatingWhatsapp } from "@/components/floating-whatsapp";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
-import { QuoteFormSection } from "@/components/quote-form-section";
+import { SiteFooterChrome, SiteHeaderChrome } from "@/components/site-chrome";
+import { getEditableContent } from "@/lib/editable-content";
 import { company, movingCompanySchema, serviceDistricts } from "@/lib/site-data";
 import "./globals.css";
 
@@ -15,7 +13,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.bgcnakliyat.com"),
   title: {
-    default: "BGC Nakliyat | İstanbul Evden Eve Nakliyat",
+    default: "BGC Nakliyat / Evden Eve Nakliyat",
     template: "%s | BGC Nakliyat",
   },
   description:
@@ -27,13 +25,13 @@ export const metadata: Metadata = {
     ...serviceDistricts.map((district) => `${district} nakliyat`),
   ],
   openGraph: {
-    title: "BGC Nakliyat | İstanbul Nakliyat Hizmetleri",
+    title: "BGC Nakliyat / Evden Eve Nakliyat",
     description: company.slogan,
     locale: "tr_TR",
     type: "website",
     url: "https://www.bgcnakliyat.com",
     siteName: "BGC Nakliyat",
-    images: [{ url: "/images/bgc-nakliyat-hero.png", width: 1922, height: 818 }],
+    images: [{ url: "/images/sehirlerarasi-nakliyat.png", width: 853, height: 1844 }],
   },
   icons: {
     icon: "/images/bgc-logo.png",
@@ -41,14 +39,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const content = await getEditableContent();
+  const managedServiceDistricts = content.serviceDistricts.length ? content.serviceDistricts : serviceDistricts;
   const schema = {
     ...movingCompanySchema,
-    areaServed: serviceDistricts.map((district) => ({
+    areaServed: managedServiceDistricts.map((district) => ({
       "@type": "City",
       name: district,
     })),
@@ -61,11 +61,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
-        <Header serviceDistricts={serviceDistricts} />
+        <SiteHeaderChrome serviceDistricts={managedServiceDistricts} />
         <main>{children}</main>
-        <QuoteFormSection />
-        <Footer />
-        <FloatingWhatsapp />
+        <SiteFooterChrome />
       </body>
     </html>
   );

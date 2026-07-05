@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ClipboardCheck, MessageCircle, Ruler, Truck } from "lucide-react";
 import { ActionLinks } from "@/components/action-links";
+import { getEditableContent } from "@/lib/editable-content";
 import { company, services } from "@/lib/site-data";
 
 export const metadata: Metadata = {
@@ -75,7 +76,13 @@ function ServiceShowcaseCard({
   );
 }
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const { siteImages } = await getEditableContent();
+  const managedServices = services.map((service) => ({
+    ...service,
+    image: siteImages.serviceImages[service.slug] || service.image,
+  }));
+
   return (
     <>
       <section className="border-b border-slate-200 bg-white px-4 pb-14 pt-36 text-slate-950 sm:px-6 lg:px-8">
@@ -120,7 +127,7 @@ export default function ServicesPage() {
           </div>
 
           <div className="mt-16 grid gap-x-10 gap-y-20 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service, index) => (
+            {managedServices.map((service, index) => (
               <ServiceShowcaseCard key={service.slug} service={service} index={index} />
             ))}
           </div>

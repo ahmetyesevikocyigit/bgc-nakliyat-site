@@ -15,13 +15,15 @@ type DistrictPageProps = {
   }>;
 };
 
-function getDistrict(slug: string) {
-  return getEditableContent().serviceDistricts.find((district) => createSlug(district) === slug);
+async function getDistrict(slug: string) {
+  const { serviceDistricts } = await getEditableContent();
+
+  return serviceDistricts.find((district) => createSlug(district) === slug);
 }
 
 export async function generateMetadata({ params }: DistrictPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const district = getDistrict(slug);
+  const district = await getDistrict(slug);
 
   if (!district) {
     return { title: "Bölge Bulunamadı" };
@@ -40,7 +42,7 @@ export async function generateMetadata({ params }: DistrictPageProps): Promise<M
 
 export default async function DistrictPage({ params }: DistrictPageProps) {
   const { slug } = await params;
-  const district = getDistrict(slug);
+  const district = await getDistrict(slug);
 
   if (!district) {
     notFound();

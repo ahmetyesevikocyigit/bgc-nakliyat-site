@@ -1,7 +1,7 @@
-import { writeFileSync } from "node:fs";
-import { join } from "node:path";
 import editableContentData from "@/data/editable-content.json";
+import { readStoreJson, writeStoreJson } from "@/lib/persistent-store";
 import { createSlug } from "@/lib/slug";
+import { googleReviews as defaultGoogleReviews } from "@/lib/site-data";
 
 export type FaqItem = {
   question: string;
@@ -19,13 +19,79 @@ export type BlogPost = {
   published: boolean;
 };
 
+export type SiteImageSettings = {
+  heroImage: string;
+  serviceImages: Record<string, string>;
+};
+
+export type EditableGoogleReview = {
+  author: string;
+  location: string;
+  service: string;
+  rating: number;
+  text: string;
+};
+
 export type EditableContent = {
   serviceDistricts: string[];
   faqItems: FaqItem[];
   blogPosts: BlogPost[];
+  siteImages: SiteImageSettings;
+  googleReviews: EditableGoogleReview[];
 };
 
-const contentFilePath = join(process.cwd(), "src", "data", "editable-content.json");
+const defaultSiteImages: SiteImageSettings = {
+  heroImage: "/images/sehirlerarasi-nakliyat.png",
+  serviceImages: {
+    "evden-eve-nakliyat": "/images/evden-eve-nakliyat.jpg",
+    "parca-esya-tasima": "/images/parca-esya-tasima-guncel.jpeg",
+    "ofis-tasima": "/images/ofis-tasima.png",
+    "asansorlu-tasima": "/images/asansorlu-tasima.jpg",
+    "sehirlerarasi-nakliyat": "/images/sehirlerarasi-nakliyat.png",
+    "paketleme-sigortali-tasima": "/images/paketleme-sigortali-tasima.jpg",
+  },
+};
+
+function normalizeImagePath(value: unknown, fallback: string) {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return fallback;
+  }
+
+  if (
+    trimmedValue.startsWith("/") ||
+    trimmedValue.startsWith("http://") ||
+    trimmedValue.startsWith("https://") ||
+    trimmedValue.startsWith("data:image/")
+  ) {
+    return trimmedValue;
+  }
+
+  return fallback;
+}
+
+function normalizeGoogleReviews(content: Partial<EditableContent>): EditableGoogleReview[] {
+  const sourceReviews = content.googleReviews?.length ? content.googleReviews : defaultGoogleReviews;
+
+  return sourceReviews
+    .map((review) => {
+      const rating = Number(review.rating);
+
+      return {
+        author: review.author.trim(),
+        location: review.location.trim(),
+        service: review.service.trim(),
+        rating: Number.isFinite(rating) ? Math.min(5, Math.max(1, Math.round(rating))) : 5,
+        text: review.text.trim(),
+      };
+    })
+    .filter((review) => review.author && review.text);
+}
 
 function normalizeContent(content: Partial<EditableContent>): EditableContent {
   const serviceDistricts = Array.from(
@@ -72,16 +138,35 @@ function normalizeContent(content: Partial<EditableContent>): EditableContent {
     })
     .filter((post) => post.title && post.slug && post.excerpt && post.content);
 
-  return { serviceDistricts, faqItems, blogPosts };
+  const rawSiteImages = content.siteImages || defaultSiteImages;
+  const serviceImages = Object.fromEntries(
+    Object.entries(defaultSiteImages.serviceImages).map(([slug, fallbackPath]) => [
+      slug,
+      normalizeImagePath(rawSiteImages.serviceImages?.[slug], fallbackPath),
+    ]),
+  );
+
+  const siteImages = {
+    heroImage: normalizeImagePath(rawSiteImages.heroImage, defaultSiteImages.heroImage),
+    serviceImages,
+  };
+  const googleReviews = normalizeGoogleReviews(content);
+
+  return { serviceDistricts, faqItems, blogPosts, siteImages, googleReviews };
 }
 
-export function getEditableContent(): EditableContent {
-  return normalizeContent(editableContentData as Partial<EditableContent>);
+export async function getEditableContent(): Promise<EditableContent> {
+  const content = await readStoreJson<Partial<EditableContent>>(
+    "editable-content",
+    editableContentData as Partial<EditableContent>,
+  );
+
+  return normalizeContent(content);
 }
 
-export function saveEditableContent(content: EditableContent) {
+export async function saveEditableContent(content: EditableContent) {
   const normalizedContent = normalizeContent(content);
-  writeFileSync(contentFilePath, `${JSON.stringify(normalizedContent, null, 2)}\n`, "utf8");
+  await writeStoreJson("editable-content", normalizedContent);
 
   return normalizedContent;
 }

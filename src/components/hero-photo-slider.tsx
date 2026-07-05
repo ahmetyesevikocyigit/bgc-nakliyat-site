@@ -6,15 +6,15 @@ import { useEffect, useState } from "react";
 
 const heroPhotos = [
   {
-    src: "/images/bgc-nakliyat-hero.png",
-    alt: "BGC Nakliyat aracı ve taşıma ekibi",
+    src: "/images/sehirlerarasi-nakliyat.png",
+    alt: "BGC Nakliyat şehirlerarası nakliye aracı",
   },
   {
-    src: "/images/asansorlu-tasima.png",
+    src: "/images/asansorlu-tasima.jpg",
     alt: "Asansörlü taşıma hizmeti",
   },
   {
-    src: "/images/parca-esya-tasima.png",
+    src: "/images/parca-esya-tasima-guncel.jpeg",
     alt: "Parça eşya taşıma hizmeti",
   },
   {
@@ -22,35 +22,49 @@ const heroPhotos = [
     alt: "Ofis taşıma hizmeti",
   },
   {
-    src: "/images/paketleme-sigortali-tasima.png",
+    src: "/images/paketleme-sigortali-tasima.jpg",
     alt: "Paketleme ve sigortalı taşıma hizmeti",
   },
 ];
 
 const AUTOPLAY_DELAY = 3600;
 
-export function HeroPhotoSlider() {
+type HeroPhoto = {
+  src: string;
+  alt: string;
+};
+
+type HeroPhotoSliderProps = {
+  slides?: HeroPhoto[];
+};
+
+export function HeroPhotoSlider({ slides }: HeroPhotoSliderProps) {
+  const activeSlides = slides && slides.length > 0 ? slides : heroPhotos;
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % heroPhotos.length);
+      setActiveIndex((current) => (current + 1) % activeSlides.length);
     }, AUTOPLAY_DELAY);
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [activeSlides.length]);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [slides]);
 
   const showPrevious = () => {
-    setActiveIndex((current) => (current - 1 + heroPhotos.length) % heroPhotos.length);
+    setActiveIndex((current) => (current - 1 + activeSlides.length) % activeSlides.length);
   };
 
   const showNext = () => {
-    setActiveIndex((current) => (current + 1) % heroPhotos.length);
+    setActiveIndex((current) => (current + 1) % activeSlides.length);
   };
 
   return (
     <div className="relative h-full min-h-[420px] overflow-hidden">
-      {heroPhotos.map((photo, index) => (
+      {activeSlides.map((photo, index) => (
         <Image
           key={photo.src}
           src={photo.src}
@@ -66,7 +80,7 @@ export function HeroPhotoSlider() {
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.05),rgba(2,6,23,0.38))]" />
       <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between gap-4">
         <div className="flex gap-2" aria-label="Fotoğraf seçimi">
-          {heroPhotos.map((photo, index) => (
+          {activeSlides.map((photo, index) => (
             <button
               key={photo.src}
               type="button"

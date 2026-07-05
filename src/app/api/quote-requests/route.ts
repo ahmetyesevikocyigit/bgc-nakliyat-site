@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       message?: string;
     };
 
-    const quoteRequest = saveQuoteRequest({
+    const quoteRequest = await saveQuoteRequest({
       fullName: body.fullName || "",
       email: body.email || "",
       phone: body.phone || "",

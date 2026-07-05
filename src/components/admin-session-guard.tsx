@@ -1,37 +1,37 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+
+function requestLogout() {
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon("/api/admin/logout");
+    return;
+  }
+
+  fetch("/api/admin/logout", { method: "POST", keepalive: true }).catch(() => {});
+}
 
 export function AdminSessionGuard() {
-  const shouldReloadOnFocus = useRef(false);
-
   useEffect(() => {
-    const logout = () => {
-      shouldReloadOnFocus.current = true;
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const link = target?.closest("a");
 
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon("/api/admin/logout");
+      if (!link?.href) {
         return;
       }
 
-      fetch("/api/admin/logout", { method: "POST", keepalive: true }).catch(() => {});
-    };
+      const url = new URL(link.href);
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        logout();
-        return;
-      }
-
-      if (shouldReloadOnFocus.current) {
-        window.location.replace("/admin");
+      if (url.origin === window.location.origin && !url.pathname.startsWith("/admin")) {
+        requestLogout();
       }
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("click", handleDocumentClick);
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("click", handleDocumentClick);
     };
   }, []);
 

@@ -8,8 +8,8 @@ import { createSlug } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
 
-export function generateMetadata(): Metadata {
-  const { serviceDistricts } = getEditableContent();
+export async function generateMetadata(): Promise<Metadata> {
+  const { serviceDistricts } = await getEditableContent();
   const highlightedDistricts = serviceDistricts.slice(0, 4).join(", ");
 
   return {
@@ -46,8 +46,8 @@ function createRegionDetails(districts: string[]) {
   }));
 }
 
-export default function RegionsPage() {
-  const { serviceDistricts } = getEditableContent();
+export default async function RegionsPage() {
+  const { serviceDistricts } = await getEditableContent();
   const highlightedDistricts = serviceDistricts.slice(0, 3).join(", ");
   const heroText = highlightedDistricts
     ? `${highlightedDistricts} odağında; apartman, site ve ofis taşımaları için rota, araç ve ekip planı önceden hazırlanır.`

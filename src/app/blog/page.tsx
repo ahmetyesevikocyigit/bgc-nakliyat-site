@@ -19,8 +19,8 @@ function formatDate(date: string) {
   }).format(new Date(date));
 }
 
-export default function BlogPage() {
-  const { blogPosts } = getEditableContent();
+export default async function BlogPage() {
+  const { blogPosts } = await getEditableContent();
   const publishedPosts = blogPosts
     .filter((post) => post.published)
     .sort((firstPost, secondPost) => secondPost.date.localeCompare(firstPost.date));
