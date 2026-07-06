@@ -214,6 +214,22 @@ function getFilePreviewUrl(file?: File) {
   return file ? URL.createObjectURL(file) : "";
 }
 
+function getInitialAdminSection(initialSection?: string): AdminSection {
+  if (isAdminSection(initialSection)) {
+    return initialSection;
+  }
+
+  if (typeof window !== "undefined") {
+    const storedSection = window.sessionStorage.getItem("bgc-admin-section");
+
+    if (isAdminSection(storedSection)) {
+      return storedSection;
+    }
+  }
+
+  return "overview";
+}
+
 export function AdminContentEditor({
   content,
   mediaItems: initialMediaItems,
@@ -223,8 +239,8 @@ export function AdminContentEditor({
   hasContentError = false,
   passwordError,
 }: AdminContentEditorProps) {
-  const [activeSection, setActiveSection] = useState<AdminSection>(
-    isAdminSection(initialSection) ? initialSection : "overview",
+  const [activeSection, setActiveSectionState] = useState<AdminSection>(() =>
+    getInitialAdminSection(initialSection),
   );
   const [serviceDistricts, setServiceDistricts] = useState(content.serviceDistricts);
   const [newDistrict, setNewDistrict] = useState("");
@@ -250,6 +266,14 @@ export function AdminContentEditor({
   const selectedDistrictPage =
     syncedDistrictPages.find((page) => page.slug === selectedDistrictPageSlug) ||
     syncedDistrictPages[0];
+
+  const setActiveSection = (section: AdminSection) => {
+    setActiveSectionState(section);
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("bgc-admin-section", section);
+    }
+  };
 
   const addDistrict = () => {
     const district = newDistrict.trim();
@@ -640,6 +664,9 @@ export function AdminContentEditor({
         action={saveAdminContentAction}
         encType="multipart/form-data"
         onKeyDown={preventAccidentalEnterSubmit}
+        onSubmit={() => {
+          window.sessionStorage.setItem("bgc-admin-section", activeSection);
+        }}
         className="mx-auto grid max-w-[1760px] gap-4 lg:grid-cols-[280px_1fr]"
       >
         <input type="hidden" name="serviceDistricts" value={JSON.stringify(serviceDistricts)} />
