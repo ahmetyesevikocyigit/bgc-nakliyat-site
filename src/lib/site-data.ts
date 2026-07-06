@@ -34,8 +34,9 @@ export const navItems = [
   { label: "Bölgeler", href: "/bolgeler" },
   { label: "Blog", href: "/blog" },
   { label: "İletişim", href: "/iletisim" },
-  { label: "Yönetim", href: "/admin" },
 ];
+
+export const managementLink = { label: "Yönetim", href: "/admin" };
 
 export const avebworks = {
   name: "Avebworks",

@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, Clock, MapPin, Menu, Phone, X } from "lucide-react";
+import { ChevronDown, Clock, KeyRound, MapPin, Menu, Phone, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { SiteReview } from "@/lib/google-reviews";
 import { createDistrictSlug } from "@/lib/slug";
-import { company, googleReviews, navItems } from "@/lib/site-data";
+import { company, googleReviews, managementLink, navItems } from "@/lib/site-data";
 
 type HeaderProps = {
   serviceDistricts: string[];
@@ -146,6 +146,13 @@ export function Header({ serviceDistricts }: HeaderProps) {
             <Clock className="size-3.5 text-orange-500" aria-hidden="true" />
             {company.hours}
           </div>
+          <Link
+            href={managementLink.href}
+            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 text-xs font-black text-emerald-800 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-100 sm:min-h-11 sm:px-4 sm:text-sm"
+          >
+            <KeyRound className="size-3.5 sm:size-4" aria-hidden="true" />
+            {managementLink.label}
+          </Link>
           <a
             href={company.phoneHref}
             className="hidden min-h-11 items-center justify-center gap-2 rounded-full bg-orange-500 px-4 text-sm font-black text-white shadow-lg shadow-orange-500/25 transition hover:bg-orange-600 sm:inline-flex"
