@@ -24,7 +24,7 @@ import {
   Tags,
   Trash2,
 } from "lucide-react";
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { saveAdminContentAction } from "@/app/admin/actions";
 import type {
   BlogMediaBlock,
@@ -219,14 +219,6 @@ function getInitialAdminSection(initialSection?: string): AdminSection {
     return initialSection;
   }
 
-  if (typeof window !== "undefined") {
-    const storedSection = window.sessionStorage.getItem("bgc-admin-section");
-
-    if (isAdminSection(storedSection)) {
-      return storedSection;
-    }
-  }
-
   return "overview";
 }
 
@@ -266,6 +258,18 @@ export function AdminContentEditor({
   const selectedDistrictPage =
     syncedDistrictPages.find((page) => page.slug === selectedDistrictPageSlug) ||
     syncedDistrictPages[0];
+
+  useEffect(() => {
+    if (isAdminSection(initialSection)) {
+      return;
+    }
+
+    const storedSection = window.sessionStorage.getItem("bgc-admin-section");
+
+    if (isAdminSection(storedSection)) {
+      setActiveSectionState(storedSection);
+    }
+  }, [initialSection]);
 
   const setActiveSection = (section: AdminSection) => {
     setActiveSectionState(section);
