@@ -96,6 +96,7 @@ export default async function FaqPage() {
               {visibleFaqItems.map((item, index) => (
                 <article
                   key={`${item.question}-${index}`}
+                  id={`soru-${index + 1}`}
                   className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
                 >
                   <span className="mb-4 inline-flex size-10 items-center justify-center rounded-lg bg-orange-50 text-sm font-black text-orange-700">

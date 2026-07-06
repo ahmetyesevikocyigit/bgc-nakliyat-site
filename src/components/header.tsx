@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import type { SiteReview } from "@/lib/google-reviews";
 import { createDistrictSlug } from "@/lib/slug";
 import { company, googleReviews, navItems } from "@/lib/site-data";
+import { SiteSearchForm } from "@/components/site-search-form";
 
 type HeaderProps = {
   serviceDistricts: string[];
@@ -142,6 +143,9 @@ export function Header({ serviceDistricts }: HeaderProps) {
         </nav>
 
         <div className="flex items-center gap-2">
+          <div className="hidden xl:block">
+            <SiteSearchForm />
+          </div>
           <div className="hidden items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-xs font-black text-slate-600 lg:inline-flex">
             <Clock className="size-3.5 text-orange-500" aria-hidden="true" />
             {company.hours}
@@ -173,6 +177,9 @@ export function Header({ serviceDistricts }: HeaderProps) {
               className="absolute right-0 top-[58px] max-h-[78vh] w-72 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-950/20"
               aria-label="Mobil ana menü"
             >
+              <div className="p-2">
+                <SiteSearchForm compact onSubmit={closeMobileMenu} />
+              </div>
               {navItems.map((item) =>
                 item.href === "/bolgeler" ? (
                   <details key={item.href} className="group/regions">
