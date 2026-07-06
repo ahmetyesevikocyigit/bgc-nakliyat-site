@@ -267,7 +267,11 @@ export function AdminContentEditor({
     const storedSection = window.sessionStorage.getItem("bgc-admin-section");
 
     if (isAdminSection(storedSection)) {
-      setActiveSectionState(storedSection);
+      const frame = window.requestAnimationFrame(() => {
+        setActiveSectionState(storedSection);
+      });
+
+      return () => window.cancelAnimationFrame(frame);
     }
   }, [initialSection]);
 
