@@ -55,6 +55,7 @@ type AdminContentEditorProps = {
   content: EditableContent;
   mediaItems: MediaItem[];
   quoteRequests: QuoteRequest[];
+  initialSection?: string;
   saved?: boolean;
   hasContentError?: boolean;
   passwordError?: string;
@@ -191,15 +192,40 @@ function serializeContentBlocks(blocks: ContentBlock[]) {
     .join("\n\n");
 }
 
+function isAdminSection(value: unknown): value is AdminSection {
+  return (
+    typeof value === "string" &&
+    [
+      "overview",
+      "requests",
+      "images",
+      "media",
+      "reviews",
+      "districts",
+      "districtPages",
+      "faq",
+      "blog",
+      "settings",
+    ].includes(value)
+  );
+}
+
+function getFilePreviewUrl(file?: File) {
+  return file ? URL.createObjectURL(file) : "";
+}
+
 export function AdminContentEditor({
   content,
   mediaItems: initialMediaItems,
   quoteRequests,
+  initialSection,
   saved = false,
   hasContentError = false,
   passwordError,
 }: AdminContentEditorProps) {
-  const [activeSection, setActiveSection] = useState<AdminSection>("overview");
+  const [activeSection, setActiveSection] = useState<AdminSection>(
+    isAdminSection(initialSection) ? initialSection : "overview",
+  );
   const [serviceDistricts, setServiceDistricts] = useState(content.serviceDistricts);
   const [newDistrict, setNewDistrict] = useState("");
   const [districtPages, setDistrictPages] = useState<DistrictPageContent[]>(
@@ -209,6 +235,9 @@ export function AdminContentEditor({
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(content.blogPosts);
   const [siteImages, setSiteImages] = useState<SiteImageSettings>(content.siteImages);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>(initialMediaItems);
+  const [siteImagePreviews, setSiteImagePreviews] = useState<Record<string, string>>({});
+  const [mediaFilePreviews, setMediaFilePreviews] = useState<Record<string, string>>({});
+  const [mediaPosterPreviews, setMediaPosterPreviews] = useState<Record<string, string>>({});
   const [googleReviews, setGoogleReviews] = useState<EditableGoogleReview[]>(content.googleReviews);
   const [selectedDistrictPageSlug, setSelectedDistrictPageSlug] = useState(
     districtPages[0]?.slug || "",
@@ -342,6 +371,13 @@ export function AdminContentEditor({
     setBlogPosts((currentPosts) => currentPosts.filter((_, postIndex) => postIndex !== index));
   };
 
+  const updateSiteImagePreview = (key: string, file?: File) => {
+    setSiteImagePreviews((currentPreviews) => ({
+      ...currentPreviews,
+      [key]: getFilePreviewUrl(file),
+    }));
+  };
+
   const addMediaItem = (type: MediaType) => {
     const now = new Date().toISOString();
     const id = `media-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -371,6 +407,25 @@ export function AdminContentEditor({
       ...currentItems,
     ]);
     setActiveSection("media");
+  };
+
+  const removeMediaItem = (index: number) => {
+    const removedItem = mediaItems[index];
+
+    setMediaItems((currentItems) => currentItems.filter((_, itemIndex) => itemIndex !== index));
+
+    if (removedItem) {
+      setMediaFilePreviews((currentPreviews) => {
+        const nextPreviews = { ...currentPreviews };
+        delete nextPreviews[removedItem.id];
+        return nextPreviews;
+      });
+      setMediaPosterPreviews((currentPreviews) => {
+        const nextPreviews = { ...currentPreviews };
+        delete nextPreviews[removedItem.id];
+        return nextPreviews;
+      });
+    }
   };
 
   const updateMediaItem = <Key extends keyof MediaItem>(
@@ -403,6 +458,20 @@ export function AdminContentEditor({
         return { ...item, [key]: nextValues, updatedAt: new Date().toISOString() };
       }),
     );
+  };
+
+  const updateMediaFilePreview = (id: string, file?: File) => {
+    setMediaFilePreviews((currentPreviews) => ({
+      ...currentPreviews,
+      [id]: getFilePreviewUrl(file),
+    }));
+  };
+
+  const updateMediaPosterPreview = (id: string, file?: File) => {
+    setMediaPosterPreviews((currentPreviews) => ({
+      ...currentPreviews,
+      [id]: getFilePreviewUrl(file),
+    }));
   };
 
   const updateHeroImage = (value: string) => {
@@ -580,6 +649,7 @@ export function AdminContentEditor({
         <input type="hidden" name="siteImages" value={JSON.stringify(siteImages)} />
         <input type="hidden" name="mediaItems" value={JSON.stringify(mediaItems)} />
         <input type="hidden" name="googleReviews" value={JSON.stringify(googleReviews)} />
+        <input type="hidden" name="activeSection" value={activeSection} />
 
         <aside className="rounded-[28px] bg-white p-5 shadow-sm shadow-slate-200/80 lg:sticky lg:top-3 lg:min-h-[calc(100vh-24px)]">
           <div className="mb-10 flex items-center gap-3">
@@ -762,8 +832,10 @@ export function AdminContentEditor({
           {activeSection === "images" ? (
             <ImagesPanel
               siteImages={siteImages}
+              siteImagePreviews={siteImagePreviews}
               onUpdateHeroImage={updateHeroImage}
               onUpdateServiceImage={updateServiceImage}
+              onUpdateImagePreview={updateSiteImagePreview}
             />
           ) : null}
 
@@ -774,7 +846,12 @@ export function AdminContentEditor({
               districts={serviceDistricts}
               onAddMedia={addMediaItem}
               onUpdateMedia={updateMediaItem}
+              onRemoveMedia={removeMediaItem}
               onToggleMediaListValue={toggleMediaListValue}
+              mediaFilePreviews={mediaFilePreviews}
+              mediaPosterPreviews={mediaPosterPreviews}
+              onUpdateMediaFilePreview={updateMediaFilePreview}
+              onUpdateMediaPosterPreview={updateMediaPosterPreview}
             />
           ) : null}
 
@@ -1062,8 +1139,10 @@ function PasswordPanel() {
 
 type ImagesPanelProps = {
   siteImages: SiteImageSettings;
+  siteImagePreviews: Record<string, string>;
   onUpdateHeroImage: (value: string) => void;
   onUpdateServiceImage: (slug: string, value: string) => void;
+  onUpdateImagePreview: (key: string, file?: File) => void;
 };
 
 function getDefaultServiceImage(service: (typeof services)[number]) {
@@ -1072,8 +1151,10 @@ function getDefaultServiceImage(service: (typeof services)[number]) {
 
 function ImagesPanel({
   siteImages,
+  siteImagePreviews,
   onUpdateHeroImage,
   onUpdateServiceImage,
+  onUpdateImagePreview,
 }: ImagesPanelProps) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80  sm:p-6">
@@ -1087,8 +1168,10 @@ function ImagesPanel({
           title="Ana Sayfa Hero Görseli"
           description="Siteye girince ilk görünen büyük karşılama fotoğrafı."
           imagePath={siteImages.heroImage}
+          previewPath={siteImagePreviews.hero}
           fileInputName="heroImageFile"
           onImagePathChange={onUpdateHeroImage}
+          onFilePreviewChange={(file) => onUpdateImagePreview("hero", file)}
           onReset={() => onUpdateHeroImage("/images/sehirlerarasi-nakliyat.png")}
         />
 
@@ -1102,8 +1185,10 @@ function ImagesPanel({
                 title={service.title}
                 description="Bu görsel ana sayfadaki ve hizmetler sayfasındaki hizmet kartlarında kullanılır."
                 imagePath={imagePath}
+                previewPath={siteImagePreviews[service.slug]}
                 fileInputName={`serviceImageFile-${service.slug}`}
                 onImagePathChange={(value) => onUpdateServiceImage(service.slug, value)}
+                onFilePreviewChange={(file) => onUpdateImagePreview(service.slug, file)}
                 onReset={() => onUpdateServiceImage(service.slug, getDefaultServiceImage(service))}
               />
             );
@@ -1118,8 +1203,10 @@ type ImageEditorCardProps = {
   title: string;
   description: string;
   imagePath: string;
+  previewPath?: string;
   fileInputName: string;
   onImagePathChange: (value: string) => void;
+  onFilePreviewChange: (file?: File) => void;
   onReset: () => void;
 };
 
@@ -1127,16 +1214,20 @@ function ImageEditorCard({
   title,
   description,
   imagePath,
+  previewPath,
   fileInputName,
   onImagePathChange,
+  onFilePreviewChange,
   onReset,
 }: ImageEditorCardProps) {
+  const visibleImagePath = previewPath || imagePath;
+
   return (
     <article className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-[220px_1fr]">
       <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-        {imagePath ? (
+        {visibleImagePath ? (
           <img
-            src={imagePath}
+            src={visibleImagePath}
             alt=""
             className="h-full w-full object-cover"
           />
@@ -1184,6 +1275,7 @@ function ImageEditorCard({
             name={fileInputName}
             type="file"
             accept="image/*"
+            onChange={(event) => onFilePreviewChange(event.target.files?.[0])}
             className="block w-full rounded-lg border border-dashed border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-orange-500 file:px-4 file:py-2 file:text-sm file:font-black file:text-white hover:file:bg-orange-600"
           />
           <span className="text-xs font-semibold leading-5 text-slate-500">
@@ -1205,11 +1297,16 @@ type MediaLibraryPanelProps = {
     key: Key,
     value: MediaItem[Key],
   ) => void;
+  onRemoveMedia: (index: number) => void;
   onToggleMediaListValue: (
     index: number,
     key: "categoryIds" | "serviceSlugs" | "districtSlugs" | "blogSlugs",
     value: string,
   ) => void;
+  mediaFilePreviews: Record<string, string>;
+  mediaPosterPreviews: Record<string, string>;
+  onUpdateMediaFilePreview: (id: string, file?: File) => void;
+  onUpdateMediaPosterPreview: (id: string, file?: File) => void;
 };
 
 function MediaLibraryPanel({
@@ -1218,7 +1315,12 @@ function MediaLibraryPanel({
   districts,
   onAddMedia,
   onUpdateMedia,
+  onRemoveMedia,
   onToggleMediaListValue,
+  mediaFilePreviews,
+  mediaPosterPreviews,
+  onUpdateMediaFilePreview,
+  onUpdateMediaPosterPreview,
 }: MediaLibraryPanelProps) {
   const activeBlogs = blogPosts.filter((post) => post.slug);
 
@@ -1272,24 +1374,27 @@ function MediaLibraryPanel({
                     </p>
                   </div>
                 </div>
-                <label className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-black text-slate-950">
-                  <input
-                    type="checkbox"
-                    checked={item.active}
-                    onChange={(event) => onUpdateMedia(index, "active", event.target.checked)}
-                    className="size-4 accent-orange-500"
-                  />
-                  Aktif
-                </label>
+                <div className="flex items-center gap-2">
+                  <label className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-black text-slate-950">
+                    <input
+                      type="checkbox"
+                      checked={item.active}
+                      onChange={(event) => onUpdateMedia(index, "active", event.target.checked)}
+                      className="size-4 accent-orange-500"
+                    />
+                    Aktif
+                  </label>
+                  <IconButton label={`${item.title || index + 1}. medyayı galeriden kaldır`} onClick={() => onRemoveMedia(index)} />
+                </div>
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[240px_1fr]">
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                   <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-950">
-                    {item.type === "image" && item.src ? (
-                      <img src={item.src} alt="" className="h-full w-full object-cover" />
-                    ) : item.type === "video" && item.posterSrc ? (
-                      <img src={item.posterSrc} alt="" className="h-full w-full object-cover" />
+                    {item.type === "image" && (mediaFilePreviews[item.id] || item.src) ? (
+                      <img src={mediaFilePreviews[item.id] || item.src} alt="" className="h-full w-full object-cover" />
+                    ) : item.type === "video" && (mediaPosterPreviews[item.id] || item.posterSrc) ? (
+                      <img src={mediaPosterPreviews[item.id] || item.posterSrc} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <div className="grid h-full place-items-center text-center text-xs font-black uppercase tracking-[0.12em] text-white/70">
                         Önizleme
@@ -1304,6 +1409,7 @@ function MediaLibraryPanel({
                       name={`mediaFile-${item.id}`}
                       type="file"
                       accept={item.type === "video" ? "video/mp4,video/webm,video/quicktime" : "image/*"}
+                      onChange={(event) => onUpdateMediaFilePreview(item.id, event.target.files?.[0])}
                       className="block w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-orange-500 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-orange-600"
                     />
                   </label>
@@ -1316,6 +1422,7 @@ function MediaLibraryPanel({
                         name={`mediaPosterFile-${item.id}`}
                         type="file"
                         accept="image/*"
+                        onChange={(event) => onUpdateMediaPosterPreview(item.id, event.target.files?.[0])}
                         className="block w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-slate-800 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-slate-950"
                       />
                     </label>

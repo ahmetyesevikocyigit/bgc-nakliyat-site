@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Film, ImageIcon, Play, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MediaCategory, MediaItem, MediaType } from "@/lib/media-library";
 
 type MediaGalleryProps = {
@@ -98,6 +98,24 @@ export function MediaGallery({
   const [selectedType, setSelectedType] = useState<"all" | MediaType>("all");
   const [query, setQuery] = useState("");
   const [activeItem, setActiveItem] = useState<MediaItem | null>(null);
+
+  useEffect(() => {
+    if (!activeItem) {
+      return;
+    }
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveItem(null);
+      }
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [activeItem]);
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = query.toLocaleLowerCase("tr-TR").trim();
@@ -217,7 +235,12 @@ export function MediaGallery({
       </div>
 
       {activeItem ? (
-        <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/85 p-4 backdrop-blur">
+        <div
+          className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/85 p-4 backdrop-blur"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setActiveItem(null)}
+        >
           <button
             type="button"
             onClick={() => setActiveItem(null)}
@@ -227,7 +250,10 @@ export function MediaGallery({
           >
             <X className="size-5" aria-hidden="true" />
           </button>
-          <div className="w-full max-w-5xl overflow-hidden rounded-lg bg-white shadow-2xl">
+          <div
+            className="w-full max-w-5xl overflow-hidden rounded-lg bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="relative aspect-video bg-slate-950">
               <MediaVisual item={activeItem} priority />
             </div>

@@ -246,6 +246,29 @@ function parseMediaItems(value: FormDataEntryValue | null): MediaItem[] {
   return normalizeMediaLibrary(JSON.parse(value) as unknown);
 }
 
+const adminSectionIds = new Set([
+  "overview",
+  "requests",
+  "images",
+  "media",
+  "reviews",
+  "districts",
+  "districtPages",
+  "faq",
+  "blog",
+  "settings",
+]);
+
+function getAdminRedirectPath(formData: FormData, searchParams = "") {
+  const activeSection = formData.get("activeSection");
+  const section =
+    typeof activeSection === "string" && adminSectionIds.has(activeSection)
+      ? activeSection
+      : "overview";
+
+  return `/admin${searchParams}${searchParams ? "&" : "?"}section=${encodeURIComponent(section)}`;
+}
+
 function getUploadExtension(file: File) {
   const extension = extname(file.name).toLowerCase();
 
@@ -429,7 +452,7 @@ export async function saveAdminContentAction(formData: FormData) {
   }
 
   if (serviceDistricts.length === 0 || faqItems.length === 0) {
-    redirect("/admin?error=content");
+    redirect(getAdminRedirectPath(formData, "?error=content"));
   }
 
   const now = new Date().toISOString();
@@ -480,13 +503,13 @@ export async function saveAdminContentAction(formData: FormData) {
 
     if (hasPasswordIntent) {
       if (typeof newPassword !== "string" || typeof confirmPassword !== "string" || newPassword !== confirmPassword) {
-        redirect("/admin?error=password-match");
+        redirect(getAdminRedirectPath(formData, "?error=password-match"));
       }
 
       const result = await updateAdminPassword(String(currentPassword || ""), newPassword);
 
       if (!result.ok) {
-        redirect(result.reason === "length" ? "/admin?error=password-length" : "/admin?error=password");
+        redirect(getAdminRedirectPath(formData, result.reason === "length" ? "?error=password-length" : "?error=password"));
       }
     }
   }
@@ -519,5 +542,5 @@ export async function saveAdminContentAction(formData: FormData) {
   });
   revalidatePath("/admin");
 
-  redirect("/admin?saved=1");
+  redirect(getAdminRedirectPath(formData, "?saved=1"));
 }

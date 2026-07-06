@@ -23,6 +23,7 @@ type AdminPageProps = {
   searchParams?: Promise<{
     error?: string;
     saved?: string;
+    section?: string;
   }>;
 };
 
@@ -41,6 +42,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         content={await getEditableContent()}
         mediaItems={await getMediaLibrary()}
         quoteRequests={await getQuoteRequests()}
+        initialSection={params?.section}
         saved={params?.saved === "1"}
         hasContentError={params?.error === "content"}
         passwordError={params?.error?.startsWith("password") ? params.error : undefined}
