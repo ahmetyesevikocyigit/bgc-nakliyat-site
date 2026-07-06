@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const { faqItems, serviceDistricts, siteImages } = await getEditableContent();
+  const featuredFaqItems = faqItems.slice(0, 6);
   const managedServices = services.map((service) => ({
     ...service,
     image: siteImages.serviceImages[service.slug] || service.image,
@@ -131,7 +132,7 @@ export default async function Home() {
           <h2 className="mb-10 text-center text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
             Sık Sorulan Sorular
           </h2>
-          <FaqAccordion items={faqItems} />
+          <FaqAccordion items={featuredFaqItems} />
           <div className="mt-10 text-center">
             <Link
               href="/sss"
