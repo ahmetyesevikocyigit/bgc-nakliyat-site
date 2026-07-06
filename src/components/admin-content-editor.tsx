@@ -24,8 +24,8 @@ import {
   Tags,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
-import { logoutAction, saveAdminContentAction } from "@/app/admin/actions";
+import { useState, type KeyboardEvent } from "react";
+import { saveAdminContentAction } from "@/app/admin/actions";
 import type {
   BlogMediaBlock,
   BlogPost,
@@ -533,9 +533,46 @@ export function AdminContentEditor({
     { label: "Medya", value: activeMediaCount, icon: Film },
   ];
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } finally {
+      window.location.href = "/admin";
+    }
+  };
+
+  const preventAccidentalEnterSubmit = (event: KeyboardEvent<HTMLFormElement>) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    const target = event.target;
+
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    if (target.tagName.toLowerCase() !== "input") {
+      return;
+    }
+
+    const input = target as HTMLInputElement;
+
+    if (["button", "checkbox", "file", "radio", "submit"].includes(input.type)) {
+      return;
+    }
+
+    event.preventDefault();
+  };
+
   return (
     <div className="min-h-screen bg-[#eef1f0] px-3 py-3 text-slate-950 sm:px-5 lg:px-7">
-      <form action={saveAdminContentAction} encType="multipart/form-data" className="mx-auto grid max-w-[1760px] gap-4 lg:grid-cols-[280px_1fr]">
+      <form
+        action={saveAdminContentAction}
+        encType="multipart/form-data"
+        onKeyDown={preventAccidentalEnterSubmit}
+        className="mx-auto grid max-w-[1760px] gap-4 lg:grid-cols-[280px_1fr]"
+      >
         <input type="hidden" name="serviceDistricts" value={JSON.stringify(serviceDistricts)} />
         <input type="hidden" name="districtPages" value={JSON.stringify(syncedDistrictPages)} />
         <input type="hidden" name="faqItems" value={JSON.stringify(faqItems)} />
@@ -578,8 +615,8 @@ export function AdminContentEditor({
               Site içeriklerini güncel tut, ardından tek kaydet butonuyla yayına hazırla.
             </p>
             <button
-              type="submit"
-              formAction={logoutAction}
+              type="button"
+              onClick={handleLogout}
               className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-white px-5 text-sm font-black text-emerald-950 transition hover:bg-emerald-50"
             >
               Çıkış Yap
@@ -1481,7 +1518,7 @@ function ReviewsPanel({
 
       <div className="grid gap-4">
         {reviews.map((review, index) => (
-          <article key={`${review.author}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <article key={`review-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-black text-emerald-700">Yorum {index + 1}</p>
