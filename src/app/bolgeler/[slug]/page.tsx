@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Building2, CheckCircle2, Clock, ShieldCheck, Truck } from "lucide-react";
 import { ActionLinks } from "@/components/action-links";
-import { getEditableContent } from "@/lib/editable-content";
-import { createSlug } from "@/lib/slug";
-import { company, services } from "@/lib/site-data";
+import { getEditableContent, type DistrictPageContent } from "@/lib/editable-content";
+import { createDistrictSlug, createSlug } from "@/lib/slug";
+import { services } from "@/lib/site-data";
 
 export const dynamic = "force-dynamic";
 
@@ -15,26 +15,50 @@ type DistrictPageProps = {
   }>;
 };
 
-async function getDistrict(slug: string) {
-  const { serviceDistricts } = await getEditableContent();
+async function getDistrictPage(slug: string) {
+  const { serviceDistricts, districtPages } = await getEditableContent();
+  const page = districtPages.find((districtPage) => districtPage.slug === slug);
 
-  return serviceDistricts.find((district) => createSlug(district) === slug);
+  if (page) {
+    return { page, isLegacySlug: false };
+  }
+
+  const legacyDistrict = serviceDistricts.find((district) => createSlug(district) === slug);
+
+  if (!legacyDistrict) {
+    return null;
+  }
+
+  return {
+    page:
+      districtPages.find((districtPage) => districtPage.district === legacyDistrict) ||
+      ({
+        district: legacyDistrict,
+        slug: createDistrictSlug(legacyDistrict),
+        seoTitle: `${legacyDistrict} Evden Eve Nakliyat`,
+        seoDescription: `${legacyDistrict} bölgesinde evden eve nakliyat hizmeti.`,
+        html: "",
+      } satisfies DistrictPageContent),
+    isLegacySlug: true,
+  };
 }
 
 export async function generateMetadata({ params }: DistrictPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const district = await getDistrict(slug);
+  const districtPage = await getDistrictPage(slug);
 
-  if (!district) {
+  if (!districtPage) {
     return { title: "Bölge Bulunamadı" };
   }
 
+  const { page } = districtPage;
+
   return {
-    title: `${district} Nakliyat`,
-    description: `${company.name} ${district} bölgesinde evden eve nakliyat, parça eşya, ofis taşıma ve asansörlü taşıma hizmetleri sunar.`,
+    title: page.seoTitle,
+    description: page.seoDescription,
     openGraph: {
-      title: `${district} Nakliyat | ${company.name}`,
-      description: `${district} için planlı, sigortalı ve hızlı nakliyat çözümleri.`,
+      title: page.seoTitle,
+      description: page.seoDescription,
       type: "website",
     },
   };
@@ -42,10 +66,17 @@ export async function generateMetadata({ params }: DistrictPageProps): Promise<M
 
 export default async function DistrictPage({ params }: DistrictPageProps) {
   const { slug } = await params;
-  const district = await getDistrict(slug);
+  const districtPage = await getDistrictPage(slug);
 
-  if (!district) {
+  if (!districtPage) {
     notFound();
+  }
+
+  const { page, isLegacySlug } = districtPage;
+  const district = page.district;
+
+  if (isLegacySlug) {
+    redirect(`/bolgeler/${page.slug}`);
   }
 
   const planningItems = [
@@ -81,19 +112,36 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
 
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
+            <aside className="rounded-lg border border-slate-200 bg-slate-50 p-5 lg:sticky lg:top-28">
+              <p className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-cyan-700">
+                Yerel Planlama
+              </p>
+              <h2 className="text-2xl font-black tracking-tight text-slate-950">
+                {district} için hızlı keşif ve doğru taşıma planı.
+              </h2>
+              <p className="mt-4 text-sm font-semibold leading-7 text-slate-600">
+                Bu sayfanın hero alanı sabit tutulur. Alt içerik admin panelinden HTML düzeninde güncellenir.
+              </p>
+            </aside>
+            <div
+              className="editable-region-html rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
+              dangerouslySetInnerHTML={{ __html: page.html }}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
             <div>
               <p className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-cyan-700">
-                Yerel Planlama
+                Operasyon
               </p>
               <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
                 {district} için taşıma koşulları baştan planlanır.
               </h2>
-              <p className="mt-5 text-base leading-8 text-slate-600">
-                Her ilçede bina yapısı, sokak yoğunluğu, otopark durumu ve taşıma saatleri
-                değişebilir. {company.name}, {district} taşımalarında bu detayları teklif
-                aşamasında değerlendirerek daha kontrollü bir süreç oluşturur.
-              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {planningItems.map((item) => {
@@ -111,7 +159,7 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-20">
+      <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 max-w-3xl">
             <p className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-orange-500">

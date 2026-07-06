@@ -1,7 +1,7 @@
 import editableContentData from "@/data/editable-content.json";
 import { readStoreJson, writeStoreJson } from "@/lib/persistent-store";
-import { createSlug } from "@/lib/slug";
-import { googleReviews as defaultGoogleReviews } from "@/lib/site-data";
+import { createDistrictSlug, createSlug } from "@/lib/slug";
+import { company, googleReviews as defaultGoogleReviews } from "@/lib/site-data";
 
 export type FaqItem = {
   question: string;
@@ -19,6 +19,14 @@ export type BlogPost = {
   published: boolean;
 };
 
+export type DistrictPageContent = {
+  district: string;
+  slug: string;
+  seoTitle: string;
+  seoDescription: string;
+  html: string;
+};
+
 export type SiteImageSettings = {
   heroImage: string;
   serviceImages: Record<string, string>;
@@ -34,11 +42,87 @@ export type EditableGoogleReview = {
 
 export type EditableContent = {
   serviceDistricts: string[];
+  districtPages: DistrictPageContent[];
   faqItems: FaqItem[];
   blogPosts: BlogPost[];
   siteImages: SiteImageSettings;
   googleReviews: EditableGoogleReview[];
 };
+
+const allowedHtmlTags = new Set([
+  "a",
+  "b",
+  "blockquote",
+  "br",
+  "em",
+  "h2",
+  "h3",
+  "hr",
+  "i",
+  "li",
+  "ol",
+  "p",
+  "strong",
+  "ul",
+]);
+
+function stripDisallowedHtml(html: string) {
+  return html
+    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select)[^>]*\/?\s*>/gi, "")
+    .replace(/<\/?([a-z0-9-]+)([^>]*)>/gi, (match, tagName: string, attributes: string) => {
+      const tag = tagName.toLowerCase();
+
+      if (!allowedHtmlTags.has(tag)) {
+        return "";
+      }
+
+      if (match.startsWith("</")) {
+        return `</${tag}>`;
+      }
+
+      if (tag === "br" || tag === "hr") {
+        return `<${tag}>`;
+      }
+
+      if (tag === "a") {
+        const hrefMatch = String(attributes).match(/\shref\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i);
+        const href = (hrefMatch?.[2] || hrefMatch?.[3] || hrefMatch?.[4] || "").trim();
+        const safeHref =
+          href.startsWith("/") ||
+          href.startsWith("#") ||
+          href.startsWith("http://") ||
+          href.startsWith("https://") ||
+          href.startsWith("tel:") ||
+          href.startsWith("mailto:")
+            ? href.replace(/"/g, "&quot;")
+            : "#";
+
+        return `<a href="${safeHref}">`;
+      }
+
+      return `<${tag}>`;
+    })
+    .trim();
+}
+
+export function createDefaultDistrictPage(district: string): DistrictPageContent {
+  const slug = createDistrictSlug(district);
+
+  return {
+    district,
+    slug,
+    seoTitle: `${district} Evden Eve Nakliyat | ${company.name}`,
+    seoDescription: `${district} evden eve nakliyat, parça eşya, ofis taşıma ve asansörlü taşıma hizmetleri için ${company.name} ile hızlı teklif alın.`,
+    html: [
+      `<h2>${district} evden eve nakliyat süreci nasıl planlanır?</h2>`,
+      `<p>${company.name}, ${district} bölgesindeki taşınmalarda eşya miktarı, kat bilgisi, araç yanaşma noktası ve asansör kullanımını tekliften önce netleştirir.</p>`,
+      `<h3>${district} taşımalarında dikkat edilen noktalar</h3>`,
+      `<ul><li>Araç ve ekip planı taşınma saatine göre hazırlanır.</li><li>Kırılacak eşyalar ve mobilyalar için paketleme sırası belirlenir.</li><li>Site, apartman ve sokak koşulları taşıma planına dahil edilir.</li></ul>`,
+      `<p>Ücretsiz keşif ve hızlı fiyat teklifi için WhatsApp üzerinden ${district} taşınma detaylarını paylaşabilirsiniz.</p>`,
+    ].join("\n"),
+  };
+}
 
 const defaultSiteImages: SiteImageSettings = {
   heroImage: "/images/sehirlerarasi-nakliyat.png",
@@ -93,10 +177,53 @@ function normalizeGoogleReviews(content: Partial<EditableContent>): EditableGoog
     .filter((review) => review.author && review.text);
 }
 
+function normalizeDistrictPages(
+  content: Partial<EditableContent>,
+  serviceDistricts: string[],
+): DistrictPageContent[] {
+  const sourcePages = Array.isArray(content.districtPages) ? content.districtPages : [];
+  const pagesByDistrict = new Map(
+    sourcePages
+      .filter((page) => page && typeof page.district === "string")
+      .map((page) => [createSlug(page.district), page]),
+  );
+  const usedSlugs = new Set<string>();
+
+  return serviceDistricts.map((district) => {
+    const fallbackPage = createDefaultDistrictPage(district);
+    const source = pagesByDistrict.get(createSlug(district)) || fallbackPage;
+    const baseSlug = createDistrictSlug(district);
+    let slug = createSlug(source.slug || baseSlug);
+    let suffix = 2;
+
+    if (!slug.endsWith("-evden-eve-nakliyat")) {
+      slug = baseSlug;
+    }
+
+    while (slug && usedSlugs.has(slug)) {
+      slug = `${baseSlug}-${suffix}`;
+      suffix += 1;
+    }
+
+    if (slug) {
+      usedSlugs.add(slug);
+    }
+
+    return {
+      district,
+      slug: slug || fallbackPage.slug,
+      seoTitle: (source.seoTitle || fallbackPage.seoTitle).trim(),
+      seoDescription: (source.seoDescription || fallbackPage.seoDescription).trim(),
+      html: stripDisallowedHtml(source.html || fallbackPage.html) || fallbackPage.html,
+    };
+  });
+}
+
 function normalizeContent(content: Partial<EditableContent>): EditableContent {
   const serviceDistricts = Array.from(
     new Set((content.serviceDistricts || []).map((district) => district.trim()).filter(Boolean)),
   );
+  const districtPages = normalizeDistrictPages(content, serviceDistricts);
 
   const faqItems = (content.faqItems || [])
     .map((item) => ({
@@ -152,7 +279,7 @@ function normalizeContent(content: Partial<EditableContent>): EditableContent {
   };
   const googleReviews = normalizeGoogleReviews(content);
 
-  return { serviceDistricts, faqItems, blogPosts, siteImages, googleReviews };
+  return { serviceDistricts, districtPages, faqItems, blogPosts, siteImages, googleReviews };
 }
 
 export async function getEditableContent(): Promise<EditableContent> {

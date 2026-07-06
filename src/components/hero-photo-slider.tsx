@@ -50,10 +50,6 @@ export function HeroPhotoSlider({ slides }: HeroPhotoSliderProps) {
     return () => window.clearInterval(interval);
   }, [activeSlides.length]);
 
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [slides]);
-
   const showPrevious = () => {
     setActiveIndex((current) => (current - 1 + activeSlides.length) % activeSlides.length);
   };

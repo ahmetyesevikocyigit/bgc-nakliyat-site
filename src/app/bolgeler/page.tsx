@@ -4,7 +4,7 @@ import { Building2, Clock, MapPin, Route, ShieldCheck, Truck } from "lucide-reac
 import { ActionLinks } from "@/components/action-links";
 import { SectionHeading } from "@/components/section-heading";
 import { getEditableContent } from "@/lib/editable-content";
-import { createSlug } from "@/lib/slug";
+import { createDistrictSlug } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
 
@@ -180,7 +180,7 @@ function DistrictList({ title, districts }: DistrictListProps) {
         {districts.map((district) => (
           <Link
             key={district}
-            href={`/bolgeler/${createSlug(district)}`}
+            href={`/bolgeler/${createDistrictSlug(district)}`}
             className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700"
           >
             {district}

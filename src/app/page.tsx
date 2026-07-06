@@ -9,7 +9,6 @@ import { DistrictTickerPanel } from "@/components/district-ticker";
 import { FaqAccordion } from "@/components/faq-accordion";
 import { HeroGoogleReviews } from "@/components/hero-google-reviews";
 import { HeroPhotoSlider } from "@/components/hero-photo-slider";
-import { SectionHeading } from "@/components/section-heading";
 import { ServiceCard } from "@/components/service-card";
 import { getEditableContent } from "@/lib/editable-content";
 import { company, featureItems, services } from "@/lib/site-data";

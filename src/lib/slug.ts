@@ -10,3 +10,9 @@ export function createSlug(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+
+export function createDistrictSlug(district: string) {
+  const baseSlug = createSlug(district);
+
+  return baseSlug ? `${baseSlug}-evden-eve-nakliyat` : "";
+}

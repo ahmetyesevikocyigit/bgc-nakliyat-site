@@ -26,6 +26,7 @@ import { useState } from "react";
 import { logoutAction, saveAdminContentAction } from "@/app/admin/actions";
 import type {
   BlogPost,
+  DistrictPageContent,
   EditableContent,
   EditableGoogleReview,
   FaqItem,
@@ -40,6 +41,7 @@ type AdminSection =
   | "images"
   | "reviews"
   | "districts"
+  | "districtPages"
   | "faq"
   | "blog"
   | "settings";
@@ -70,6 +72,53 @@ function slugify(value: string) {
     .replaceAll("ç", "c")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function createDistrictPageSlug(district: string) {
+  const baseSlug = slugify(district);
+
+  return baseSlug ? `${baseSlug}-evden-eve-nakliyat` : "";
+}
+
+function createDefaultDistrictPage(district: string): DistrictPageContent {
+  return {
+    district,
+    slug: createDistrictPageSlug(district),
+    seoTitle: `${district} Evden Eve Nakliyat | BGC Nakliyat`,
+    seoDescription: `${district} evden eve nakliyat, parça eşya ve asansörlü taşıma hizmetleri için BGC Nakliyat ile hızlı teklif alın.`,
+    html: [
+      `<h2>${district} evden eve nakliyat hizmeti</h2>`,
+      `<p>BGC Nakliyat, ${district} bölgesindeki taşınmalarda eşya miktarı, kat bilgisi, araç yanaşma noktası ve paketleme ihtiyacını önceden değerlendirir.</p>`,
+      `<h3>${district} taşıma planında öne çıkanlar</h3>`,
+      `<ul><li>Araç ve ekip planı taşınma saatine göre hazırlanır.</li><li>Mobilya, beyaz eşya ve kırılacak eşyalar için paketleme sırası oluşturulur.</li><li>Site, apartman ve sokak koşulları taşıma planına dahil edilir.</li></ul>`,
+    ].join("\n"),
+  };
+}
+
+function syncDistrictPages(districts: string[], pages: DistrictPageContent[]) {
+  const pagesByDistrict = new Map(pages.map((page) => [slugify(page.district), page]));
+
+  return districts
+    .map((district) => {
+      const existingPage = pagesByDistrict.get(slugify(district));
+      const fallbackPage = createDefaultDistrictPage(district);
+
+      return {
+        ...fallbackPage,
+        ...existingPage,
+        district,
+        slug: createDistrictPageSlug(district),
+      };
+    })
+    .filter((page) => page.district.trim());
+}
+
+function sanitizePreviewHtml(html: string) {
+  return html
+    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select)[^>]*\/?\s*>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*(".*?"|'.*?'|[^\s>]+)/gi, "")
+    .replace(/\s(href|src)\s*=\s*("javascript:[^"]*"|'javascript:[^']*'|javascript:[^\s>]+)/gi, ' $1="#"');
 }
 
 function today() {
@@ -146,13 +195,23 @@ export function AdminContentEditor({
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
   const [serviceDistricts, setServiceDistricts] = useState(content.serviceDistricts);
   const [newDistrict, setNewDistrict] = useState("");
+  const [districtPages, setDistrictPages] = useState<DistrictPageContent[]>(
+    syncDistrictPages(content.serviceDistricts, content.districtPages),
+  );
   const [faqItems, setFaqItems] = useState<FaqItem[]>(content.faqItems);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(content.blogPosts);
   const [siteImages, setSiteImages] = useState<SiteImageSettings>(content.siteImages);
   const [googleReviews, setGoogleReviews] = useState<EditableGoogleReview[]>(content.googleReviews);
+  const [selectedDistrictPageSlug, setSelectedDistrictPageSlug] = useState(
+    districtPages[0]?.slug || "",
+  );
 
   const publishedBlogCount = blogPosts.filter((post) => post.published).length;
   const visibleReviewCount = googleReviews.filter((review) => review.author && review.text).length;
+  const syncedDistrictPages = syncDistrictPages(serviceDistricts, districtPages);
+  const selectedDistrictPage =
+    syncedDistrictPages.find((page) => page.slug === selectedDistrictPageSlug) ||
+    syncedDistrictPages[0];
 
   const addDistrict = () => {
     const district = newDistrict.trim();
@@ -163,18 +222,54 @@ export function AdminContentEditor({
     }
 
     setServiceDistricts((currentDistricts) => [...currentDistricts, district]);
+    setDistrictPages((currentPages) => [...currentPages, createDefaultDistrictPage(district)]);
+    setSelectedDistrictPageSlug(createDistrictPageSlug(district));
     setNewDistrict("");
   };
 
   const updateDistrict = (index: number, value: string) => {
+    const previousDistrict = serviceDistricts[index] || "";
+
     setServiceDistricts((currentDistricts) =>
       currentDistricts.map((district, districtIndex) => (districtIndex === index ? value : district)),
     );
+    setDistrictPages((currentPages) =>
+      currentPages.map((page) =>
+        slugify(page.district) === slugify(previousDistrict)
+          ? { ...page, district: value, slug: createDistrictPageSlug(value) }
+          : page,
+      ),
+    );
+    setSelectedDistrictPageSlug(createDistrictPageSlug(value));
   };
 
   const removeDistrict = (index: number) => {
+    const removedDistrict = serviceDistricts[index] || "";
     setServiceDistricts((currentDistricts) =>
       currentDistricts.filter((_, districtIndex) => districtIndex !== index),
+    );
+    setDistrictPages((currentPages) =>
+      currentPages.filter((page) => slugify(page.district) !== slugify(removedDistrict)),
+    );
+  };
+
+  const updateDistrictPage = (
+    slug: string,
+    key: keyof DistrictPageContent,
+    value: string,
+  ) => {
+    setDistrictPages((currentPages) =>
+      syncDistrictPages(serviceDistricts, currentPages).map((page) =>
+        page.slug === slug ? { ...page, [key]: value } : page,
+      ),
+    );
+  };
+
+  const insertDistrictHtml = (slug: string, snippet: string) => {
+    setDistrictPages((currentPages) =>
+      syncDistrictPages(serviceDistricts, currentPages).map((page) =>
+        page.slug === slug ? { ...page, html: `${page.html.trim()}\n${snippet}`.trim() } : page,
+      ),
     );
   };
 
@@ -302,6 +397,13 @@ export function AdminContentEditor({
       value: `${serviceDistricts.filter(Boolean).length}`,
     },
     {
+      id: "districtPages",
+      icon: FileText,
+      title: "Bölge Sayfaları",
+      text: "İlçe detay sayfalarının HTML içeriği.",
+      value: `${syncedDistrictPages.length}`,
+    },
+    {
       id: "images",
       icon: ImageIcon,
       title: "Görseller",
@@ -341,6 +443,7 @@ export function AdminContentEditor({
   const dashboardStats = [
     { label: "Teklif", value: quoteRequests.length, icon: Inbox },
     { label: "İlçe", value: serviceDistricts.filter(Boolean).length, icon: MapPin },
+    { label: "Bölge Sayfası", value: syncedDistrictPages.length, icon: FileText },
     { label: "Yorum", value: visibleReviewCount, icon: Star },
     { label: "Blog", value: `${publishedBlogCount}/${blogPosts.length}`, icon: FileText },
   ];
@@ -349,6 +452,7 @@ export function AdminContentEditor({
     <div className="min-h-screen bg-[#eef1f0] px-3 py-3 text-slate-950 sm:px-5 lg:px-7">
       <form action={saveAdminContentAction} className="mx-auto grid max-w-[1760px] gap-4 lg:grid-cols-[280px_1fr]">
         <input type="hidden" name="serviceDistricts" value={JSON.stringify(serviceDistricts)} />
+        <input type="hidden" name="districtPages" value={JSON.stringify(syncedDistrictPages)} />
         <input type="hidden" name="faqItems" value={JSON.stringify(faqItems)} />
         <input type="hidden" name="blogPosts" value={JSON.stringify(blogPosts)} />
         <input type="hidden" name="siteImages" value={JSON.stringify(siteImages)} />
@@ -518,6 +622,16 @@ export function AdminContentEditor({
               onAddDistrict={addDistrict}
               onUpdateDistrict={updateDistrict}
               onRemoveDistrict={removeDistrict}
+            />
+          ) : null}
+
+          {activeSection === "districtPages" ? (
+            <DistrictPagesPanel
+              pages={syncedDistrictPages}
+              selectedSlug={selectedDistrictPage?.slug || ""}
+              onSelect={setSelectedDistrictPageSlug}
+              onUpdatePage={updateDistrictPage}
+              onInsertHtml={insertDistrictHtml}
             />
           ) : null}
 
@@ -1134,6 +1248,183 @@ function DistrictsPanel({
             />
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+type DistrictPagesPanelProps = {
+  pages: DistrictPageContent[];
+  selectedSlug: string;
+  onSelect: (slug: string) => void;
+  onUpdatePage: (slug: string, key: keyof DistrictPageContent, value: string) => void;
+  onInsertHtml: (slug: string, snippet: string) => void;
+};
+
+function DistrictPagesPanel({
+  pages,
+  selectedSlug,
+  onSelect,
+  onUpdatePage,
+  onInsertHtml,
+}: DistrictPagesPanelProps) {
+  const selectedPage = pages.find((page) => page.slug === selectedSlug) || pages[0];
+
+  if (!selectedPage) {
+    return (
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80 sm:p-6">
+        <PanelHeader
+          title="Bölge Sayfaları"
+          text="Önce hizmet verilen ilçeler alanından en az bir ilçe eklemelisin."
+        />
+      </section>
+    );
+  }
+
+  const htmlSnippets = [
+    {
+      label: "H2",
+      value: `<h2>${selectedPage.district} evden eve nakliyat</h2>`,
+    },
+    {
+      label: "H3",
+      value: `<h3>${selectedPage.district} taşıma planı</h3>`,
+    },
+    {
+      label: "Paragraf",
+      value: `<p>${selectedPage.district} bölgesindeki taşınmalarda keşif, paketleme ve araç planı taşınma tarihinden önce netleştirilir.</p>`,
+    },
+    {
+      label: "Liste",
+      value: `<ul><li>Ücretsiz ön keşif</li><li>Planlı paketleme</li><li>Randevulu taşıma ekibi</li></ul>`,
+    },
+    {
+      label: "Not",
+      value: `<blockquote>${selectedPage.district} taşınma detaylarını WhatsApp üzerinden paylaşarak hızlı fiyat teklifi alabilirsiniz.</blockquote>`,
+    },
+  ];
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80 sm:p-6">
+      <div className="mb-5 flex flex-col justify-between gap-3 xl:flex-row xl:items-end">
+        <PanelHeader
+          title="Bölge Sayfaları"
+          text="Hero alanı sabit kalır. Buradaki HTML içerik sayfanın hero altındaki bölümünde yayınlanır."
+        />
+        <a
+          href={`/bolgeler/${selectedPage.slug}`}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-11 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-5 text-sm font-black text-emerald-700 transition hover:bg-emerald-100"
+        >
+          Sayfayı Aç
+        </a>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[280px_1fr]">
+        <aside className="grid max-h-[760px] content-start gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3">
+          {pages.map((page) => (
+            <button
+              key={page.slug}
+              type="button"
+              onClick={() => onSelect(page.slug)}
+              className={`rounded-lg border p-3 text-left transition ${
+                page.slug === selectedPage.slug
+                  ? "border-emerald-300 bg-white text-slate-950 shadow-sm"
+                  : "border-transparent bg-transparent text-slate-600 hover:bg-white"
+              }`}
+            >
+              <span className="block text-sm font-black">{page.district}</span>
+              <span className="mt-1 block break-all text-xs font-semibold text-slate-500">
+                /bolgeler/{page.slug}
+              </span>
+            </button>
+          ))}
+        </aside>
+
+        <div className="min-w-0">
+          <div className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextInput
+                label="Sayfa Başlığı"
+                value={selectedPage.seoTitle}
+                onChange={(value) => onUpdatePage(selectedPage.slug, "seoTitle", value)}
+              />
+              <label className="grid gap-2">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                  URL Slug
+                </span>
+                <input
+                  value={selectedPage.slug}
+                  readOnly
+                  className="min-h-11 rounded-lg border border-slate-200 bg-slate-100 px-4 text-sm font-bold text-slate-600 outline-none"
+                />
+              </label>
+            </div>
+            <label className="grid gap-2">
+              <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                Meta Açıklama ({selectedPage.seoDescription.length}/160)
+              </span>
+              <textarea
+                value={selectedPage.seoDescription}
+                onChange={(event) => onUpdatePage(selectedPage.slug, "seoDescription", event.target.value)}
+                rows={3}
+                className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-7 text-slate-950 outline-none transition focus:border-emerald-400"
+              />
+            </label>
+          </div>
+
+          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                  HTML Editörü
+                </p>
+                <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                  Güvenli etiketler: h2, h3, p, ul, ol, li, strong, em, a, blockquote, br, hr.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {htmlSnippets.map((snippet) => (
+                  <EditorToolButton
+                    key={snippet.label}
+                    icon={AlignLeft}
+                    label={snippet.label}
+                    onClick={() => onInsertHtml(selectedPage.slug, snippet.value)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <textarea
+              value={selectedPage.html}
+              onChange={(event) => onUpdatePage(selectedPage.slug, "html", event.target.value)}
+              rows={16}
+              spellCheck={false}
+              className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 font-mono text-sm leading-7 text-slate-950 outline-none transition focus:border-emerald-400"
+            />
+          </div>
+
+          <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                  Canlı Önizleme
+                </p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">
+                  Hero hariç yayınlanacak alanın görünümü.
+                </p>
+              </div>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">
+                {selectedPage.district}
+              </span>
+            </div>
+            <div
+              className="editable-region-html rounded-lg border border-slate-200 bg-white p-5"
+              dangerouslySetInnerHTML={{ __html: sanitizePreviewHtml(selectedPage.html) }}
+            />
+          </div>
+        </div>
       </div>
     </section>
   );

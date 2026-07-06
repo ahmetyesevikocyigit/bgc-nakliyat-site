@@ -15,11 +15,12 @@ import {
   getEditableContent,
   saveEditableContent,
   type BlogPost,
+  type DistrictPageContent,
   type EditableGoogleReview,
   type FaqItem,
   type SiteImageSettings,
 } from "@/lib/editable-content";
-import { createSlug } from "@/lib/slug";
+import { createDistrictSlug, createSlug } from "@/lib/slug";
 import { services } from "@/lib/site-data";
 
 function parseDistricts(value: FormDataEntryValue | null) {
@@ -104,6 +105,42 @@ function parseBlogPosts(value: FormDataEntryValue | null): BlogPost[] {
       content: item.content,
       date: item.date,
       published: item.published,
+    }));
+}
+
+function parseDistrictPages(value: FormDataEntryValue | null): DistrictPageContent[] {
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  const parsedValue = JSON.parse(value) as unknown;
+
+  if (!Array.isArray(parsedValue)) {
+    return [];
+  }
+
+  return parsedValue
+    .filter(
+      (item): item is DistrictPageContent =>
+        typeof item === "object" &&
+        item !== null &&
+        "district" in item &&
+        "slug" in item &&
+        "seoTitle" in item &&
+        "seoDescription" in item &&
+        "html" in item &&
+        typeof item.district === "string" &&
+        typeof item.slug === "string" &&
+        typeof item.seoTitle === "string" &&
+        typeof item.seoDescription === "string" &&
+        typeof item.html === "string",
+    )
+    .map((item) => ({
+      district: item.district,
+      slug: item.slug,
+      seoTitle: item.seoTitle,
+      seoDescription: item.seoDescription,
+      html: item.html,
     }));
 }
 
@@ -245,8 +282,9 @@ export async function saveAdminContentAction(formData: FormData) {
 
   const previousContent = await getEditableContent();
   const previousBlogSlugs = previousContent.blogPosts.map((post) => post.slug).filter(Boolean);
-  const previousDistrictSlugs = previousContent.serviceDistricts.map(createSlug).filter(Boolean);
+  const previousDistrictSlugs = previousContent.districtPages.map((page) => page.slug).filter(Boolean);
   const serviceDistricts = parseDistricts(formData.get("serviceDistricts"));
+  const districtPages = parseDistrictPages(formData.get("districtPages"));
   const faqItems = parseFaqItems(formData.get("faqItems"));
   const blogPosts = parseBlogPosts(formData.get("blogPosts"));
   const siteImages = await parseSiteImages(formData.get("siteImages"));
@@ -300,13 +338,19 @@ export async function saveAdminContentAction(formData: FormData) {
     }
   }
 
-  await saveEditableContent({ serviceDistricts, faqItems, blogPosts, siteImages, googleReviews });
+  await saveEditableContent({ serviceDistricts, districtPages, faqItems, blogPosts, siteImages, googleReviews });
 
   revalidatePath("/");
   revalidatePath("/hizmetler");
   revalidatePath("/api/google-reviews");
   revalidatePath("/bolgeler");
-  Array.from(new Set([...previousDistrictSlugs, ...serviceDistricts.map(createSlug)])).forEach((slug) => {
+  Array.from(
+    new Set([
+      ...previousDistrictSlugs,
+      ...serviceDistricts.map(createDistrictSlug),
+      ...serviceDistricts.map(createSlug),
+    ]),
+  ).forEach((slug) => {
     if (slug) {
       revalidatePath(`/bolgeler/${slug}`);
     }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronDown, Clock, MapPin, Menu, Phone, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { SiteReview } from "@/lib/google-reviews";
-import { createSlug } from "@/lib/slug";
+import { createDistrictSlug } from "@/lib/slug";
 import { company, googleReviews, navItems } from "@/lib/site-data";
 
 type HeaderProps = {
@@ -18,7 +18,7 @@ export function Header({ serviceDistricts }: HeaderProps) {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const districtLinks = serviceDistricts.map((district) => ({
     name: district,
-    href: `/bolgeler/${createSlug(district)}`,
+    href: `/bolgeler/${createDistrictSlug(district)}`,
   }));
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export function Header({ serviceDistricts }: HeaderProps) {
         <nav className="hidden items-center gap-2 lg:flex" aria-label="Ana menü">
           {navItems.map((item) =>
             item.href === "/bolgeler" ? (
-              <div key={item.href} className="group relative">
+              <div key={item.href} className="group relative py-3">
                 <Link
                   href={item.href}
                   className="inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-orange-50 hover:text-orange-600"
@@ -96,7 +96,8 @@ export function Header({ serviceDistricts }: HeaderProps) {
                   {item.label}
                   <ChevronDown className="size-3.5 transition group-hover:rotate-180" aria-hidden="true" />
                 </Link>
-                <div className="invisible absolute left-1/2 top-full z-50 mt-3 w-80 -translate-x-1/2 translate-y-2 rounded-2xl border border-slate-200 bg-white p-4 opacity-0 shadow-2xl shadow-slate-950/18 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                <div className="invisible absolute left-1/2 top-full z-50 w-80 -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-950/18">
                   <div className="mb-4 flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-500">
@@ -124,6 +125,7 @@ export function Header({ serviceDistricts }: HeaderProps) {
                         {district.name}
                       </Link>
                     ))}
+                  </div>
                   </div>
                 </div>
               </div>

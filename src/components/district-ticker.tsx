@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
-import { createSlug } from "@/lib/slug";
+import { createDistrictSlug } from "@/lib/slug";
 
 type DistrictTickerPanelProps = {
   districts: string[];
@@ -64,7 +64,7 @@ function DistrictTicker({ districts, reverse = false }: DistrictTickerProps) {
         {repeatedDistricts.map((district, index) => (
           <Link
             key={`${district}-${index}`}
-            href={`/bolgeler/${createSlug(district)}`}
+            href={`/bolgeler/${createDistrictSlug(district)}`}
             className="group inline-flex min-h-11 min-w-36 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 shadow-sm shadow-slate-200/50 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-600"
           >
             <MapPin className="size-3.5 shrink-0 text-cyan-700 transition group-hover:text-orange-500" aria-hidden="true" />
