@@ -5,7 +5,6 @@ import {
   Truck,
 } from "lucide-react";
 import { ActionLinks } from "@/components/action-links";
-import { DistrictTickerPanel } from "@/components/district-ticker";
 import { FaqAccordion } from "@/components/faq-accordion";
 import { HeroGoogleReviews } from "@/components/hero-google-reviews";
 import { HeroPhotoSlider } from "@/components/hero-photo-slider";
@@ -16,7 +15,7 @@ import { company, featureItems, services } from "@/lib/site-data";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const { faqItems, serviceDistricts, siteImages } = await getEditableContent();
+  const { faqItems, siteImages } = await getEditableContent();
   const featuredFaqItems = faqItems.slice(0, 6);
   const managedServices = services.map((service) => ({
     ...service,
@@ -79,10 +78,6 @@ export default async function Home() {
         <div className="mx-auto max-w-7xl">
           <HeroGoogleReviews compact variant="mobile" />
         </div>
-      </section>
-
-      <section className="bg-white py-8">
-        <DistrictTickerPanel districts={serviceDistricts} />
       </section>
 
       <section className="bg-white py-20">

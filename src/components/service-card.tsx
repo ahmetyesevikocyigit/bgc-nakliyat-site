@@ -1,13 +1,5 @@
 import Image from "next/image";
-import { Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-
-type ServiceReview = {
-  author: string;
-  service: string;
-  rating: number;
-  text: string;
-};
 
 type ServiceCardProps = {
   title: string;
@@ -15,10 +7,9 @@ type ServiceCardProps = {
   details?: string;
   image?: string;
   icon: LucideIcon;
-  review?: ServiceReview;
 };
 
-export function ServiceCard({ title, summary, image, icon: Icon, review }: ServiceCardProps) {
+export function ServiceCard({ title, summary, image, icon: Icon }: ServiceCardProps) {
   return (
     <article className="group relative flex h-full flex-col rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/80">
       <div className="relative mx-4 mt-4 h-48 overflow-hidden rounded-xl bg-slate-950">
@@ -51,33 +42,6 @@ export function ServiceCard({ title, summary, image, icon: Icon, review }: Servi
           {title}
         </div>
         <p className="text-base font-semibold leading-7 text-slate-800">{summary}</p>
-        {review ? (
-          <div className="relative mt-6 rotate-[-1.5deg] rounded-2xl border border-slate-950 bg-white p-4 shadow-2xl shadow-orange-950/12 ring-1 ring-slate-950/5 transition duration-300 group-hover:-translate-y-1 group-hover:rotate-0">
-            <div className="pointer-events-none absolute -right-3 -top-5 grid size-12 place-items-center overflow-hidden rounded-full border border-slate-950 bg-white p-1.5 shadow-lg shadow-slate-950/20">
-              <Image
-                src="/images/google-icon.png"
-                alt=""
-                fill
-                className="object-contain p-1"
-                sizes="48px"
-                unoptimized
-                aria-hidden="true"
-              />
-            </div>
-            <div className="mb-2 flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-black text-slate-950">{review.author}</p>
-                <p className="text-xs font-bold text-slate-500">{review.service}</p>
-              </div>
-              <div className="flex gap-0.5 text-amber-400" aria-label={`${review.rating} yıldız`}>
-                {Array.from({ length: review.rating }).map((_, index) => (
-                  <Star key={index} className="size-3.5 fill-current" aria-hidden="true" />
-                ))}
-              </div>
-            </div>
-            <p className="line-clamp-4 text-sm font-medium leading-6 text-slate-700">{review.text}</p>
-          </div>
-        ) : null}
       </div>
     </article>
   );
