@@ -132,6 +132,15 @@ export default async function Home() {
             Sık Sorulan Sorular
           </h2>
           <FaqAccordion items={faqItems} />
+          <div className="mt-10 text-center">
+            <Link
+              href="/sss"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-slate-950 px-6 text-sm font-black text-white shadow-lg shadow-slate-950/15 transition hover:bg-orange-600"
+            >
+              Tüm soruları incele
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </div>
         </div>
       </section>
 

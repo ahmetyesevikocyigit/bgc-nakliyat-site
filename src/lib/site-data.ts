@@ -34,6 +34,7 @@ export const navItems = [
   { label: "Bölgeler", href: "/bolgeler" },
   { label: "Galeri", href: "/galeri" },
   { label: "Blog", href: "/blog" },
+  { label: "SSS", href: "/sss" },
   { label: "İletişim", href: "/iletisim" },
 ];
 
