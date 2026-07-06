@@ -142,6 +142,10 @@ export function Header({ serviceDistricts }: HeaderProps) {
           )}
         </nav>
 
+        <div className="min-w-0 flex-1 px-2 lg:hidden">
+          <SiteSearchForm compact placeholder="Ara" />
+        </div>
+
         <div className="flex items-center gap-2">
           <div className="hidden xl:block">
             <SiteSearchForm />
@@ -177,9 +181,6 @@ export function Header({ serviceDistricts }: HeaderProps) {
               className="absolute right-0 top-[58px] max-h-[78vh] w-72 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-950/20"
               aria-label="Mobil ana menü"
             >
-              <div className="p-2">
-                <SiteSearchForm compact onSubmit={closeMobileMenu} />
-              </div>
               {navItems.map((item) =>
                 item.href === "/bolgeler" ? (
                   <details key={item.href} className="group/regions">

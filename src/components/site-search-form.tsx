@@ -6,9 +6,15 @@ type SiteSearchFormProps = {
   compact?: boolean;
   defaultValue?: string;
   onSubmit?: () => void;
+  placeholder?: string;
 };
 
-export function SiteSearchForm({ compact = false, defaultValue = "", onSubmit }: SiteSearchFormProps) {
+export function SiteSearchForm({
+  compact = false,
+  defaultValue = "",
+  onSubmit,
+  placeholder = "Site içinde ara",
+}: SiteSearchFormProps) {
   return (
     <form
       action="/arama"
@@ -25,9 +31,9 @@ export function SiteSearchForm({ compact = false, defaultValue = "", onSubmit }:
         type="search"
         minLength={2}
         defaultValue={defaultValue}
-        placeholder="Site içinde ara"
-        className={`min-h-11 w-full rounded-full border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm font-bold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-orange-300 focus:bg-white ${
-          compact ? "text-base" : ""
+        placeholder={placeholder}
+        className={`w-full rounded-full border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm font-bold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-orange-300 focus:bg-white ${
+          compact ? "min-h-10" : "min-h-11"
         }`}
       />
     </form>
