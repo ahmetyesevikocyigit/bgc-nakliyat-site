@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Building2, CheckCircle2, Clock, ShieldCheck, Truck } from "lucide-react";
 import { ActionLinks } from "@/components/action-links";
+import { MediaGallery } from "@/components/media-gallery";
 import { getEditableContent, type DistrictPageContent } from "@/lib/editable-content";
+import { getMediaForGallery, getMediaLibrary } from "@/lib/media-library";
 import { createDistrictSlug, createSlug } from "@/lib/slug";
 import { services } from "@/lib/site-data";
 
@@ -74,6 +76,7 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
 
   const { page, isLegacySlug } = districtPage;
   const district = page.district;
+  const districtMedia = getMediaForGallery(await getMediaLibrary(), { districtSlug: page.slug });
 
   if (isLegacySlug) {
     redirect(`/bolgeler/${page.slug}`);
@@ -158,6 +161,13 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
           </div>
         </div>
       </section>
+
+      <MediaGallery
+        mediaItems={districtMedia}
+        title={`${district} bölgesindeki gerçek çalışmalar`}
+        text="Bu ilçe sayfasına atanmış fotoğraf ve videolar otomatik olarak burada listelenir."
+        emptyText={`${district} için henüz aktif medya kaydı eklenmedi.`}
+      />
 
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

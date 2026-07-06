@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays } from "lucide-react";
+import { MediaGallery } from "@/components/media-gallery";
 import { getEditableContent } from "@/lib/editable-content";
+import { getMediaForGallery, getMediaLibrary } from "@/lib/media-library";
+import type { MediaItem } from "@/lib/media-library";
 
 export const dynamic = "force-dynamic";
 
@@ -97,6 +100,24 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   const paragraphs = post.content.split(/\n{2,}/).filter(Boolean);
+  const mediaLibrary = await getMediaLibrary();
+  const mediaBlocks = (post.mediaBlocks || [])
+    .map((block) => {
+      const blockItems = block.mediaIds
+        .map((mediaId) => mediaLibrary.find((item) => item.id === mediaId && item.active && item.src))
+        .filter((item): item is MediaItem => Boolean(item));
+
+      const visibleItems =
+        block.layout === "video"
+          ? blockItems.filter((item) => item.type === "video")
+          : block.layout === "single"
+            ? blockItems.slice(0, 1)
+            : blockItems;
+
+      return { ...block, mediaItems: visibleItems };
+    })
+    .filter((block) => block.mediaItems.length > 0);
+  const fallbackBlogMedia = getMediaForGallery(mediaLibrary, { blogSlug: post.slug });
 
   return (
     <>
@@ -125,6 +146,24 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         </div>
       </article>
+
+      {mediaBlocks.map((block) => (
+        <MediaGallery
+          key={block.id}
+          mediaItems={block.mediaItems}
+          title={block.title || "Yazı Medyası"}
+          text="Bu yazı için admin panelinden seçilen fotoğraf ve videolar."
+          emptyText=""
+        />
+      ))}
+
+      {mediaBlocks.length === 0 && fallbackBlogMedia.length > 0 ? (
+        <MediaGallery
+          mediaItems={fallbackBlogMedia}
+          title="Yazıya bağlı medya"
+          text="Bu blog yazısına medya kütüphanesinden atanmış fotoğraf ve videolar."
+        />
+      ) : null}
     </>
   );
 }

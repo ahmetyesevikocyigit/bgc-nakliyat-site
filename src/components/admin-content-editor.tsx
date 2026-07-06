@@ -5,6 +5,7 @@ import {
   AlignLeft,
   CalendarClock,
   FileText,
+  Film,
   Heading2,
   Heading3,
   HelpCircle,
@@ -20,11 +21,13 @@ import {
   Plus,
   Save,
   Star,
+  Tags,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { logoutAction, saveAdminContentAction } from "@/app/admin/actions";
 import type {
+  BlogMediaBlock,
   BlogPost,
   DistrictPageContent,
   EditableContent,
@@ -32,6 +35,7 @@ import type {
   FaqItem,
   SiteImageSettings,
 } from "@/lib/editable-content";
+import { mediaCategories, type MediaItem, type MediaType } from "@/lib/media-library";
 import type { QuoteRequest } from "@/lib/quote-requests";
 import { services } from "@/lib/site-data";
 
@@ -39,6 +43,7 @@ type AdminSection =
   | "overview"
   | "requests"
   | "images"
+  | "media"
   | "reviews"
   | "districts"
   | "districtPages"
@@ -48,6 +53,7 @@ type AdminSection =
 
 type AdminContentEditorProps = {
   content: EditableContent;
+  mediaItems: MediaItem[];
   quoteRequests: QuoteRequest[];
   saved?: boolean;
   hasContentError?: boolean;
@@ -187,6 +193,7 @@ function serializeContentBlocks(blocks: ContentBlock[]) {
 
 export function AdminContentEditor({
   content,
+  mediaItems: initialMediaItems,
   quoteRequests,
   saved = false,
   hasContentError = false,
@@ -201,12 +208,14 @@ export function AdminContentEditor({
   const [faqItems, setFaqItems] = useState<FaqItem[]>(content.faqItems);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(content.blogPosts);
   const [siteImages, setSiteImages] = useState<SiteImageSettings>(content.siteImages);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>(initialMediaItems);
   const [googleReviews, setGoogleReviews] = useState<EditableGoogleReview[]>(content.googleReviews);
   const [selectedDistrictPageSlug, setSelectedDistrictPageSlug] = useState(
     districtPages[0]?.slug || "",
   );
 
   const publishedBlogCount = blogPosts.filter((post) => post.published).length;
+  const activeMediaCount = mediaItems.filter((item) => item.active && item.src).length;
   const visibleReviewCount = googleReviews.filter((review) => review.author && review.text).length;
   const syncedDistrictPages = syncDistrictPages(serviceDistricts, districtPages);
   const selectedDistrictPage =
@@ -300,6 +309,7 @@ export function AdminContentEditor({
         seoDescription: "",
         excerpt: "",
         content: "",
+        mediaBlocks: [],
         date: today(),
         published: false,
       },
@@ -308,7 +318,11 @@ export function AdminContentEditor({
     setActiveSection("blog");
   };
 
-  const updateBlogPost = (index: number, key: keyof BlogPost, value: string | boolean) => {
+  const updateBlogPost = (
+    index: number,
+    key: keyof BlogPost,
+    value: string | boolean | BlogMediaBlock[],
+  ) => {
     setBlogPosts((currentPosts) =>
       currentPosts.map((post, postIndex) => {
         if (postIndex !== index) {
@@ -326,6 +340,69 @@ export function AdminContentEditor({
 
   const removeBlogPost = (index: number) => {
     setBlogPosts((currentPosts) => currentPosts.filter((_, postIndex) => postIndex !== index));
+  };
+
+  const addMediaItem = (type: MediaType) => {
+    const now = new Date().toISOString();
+    const id = `media-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    setMediaItems((currentItems) => [
+      {
+        id,
+        type,
+        title: type === "video" ? "Yeni Video" : "Yeni Fotoğraf",
+        description: "",
+        alt: "",
+        caption: "",
+        fileName: "",
+        src: "",
+        originalSrc: undefined,
+        posterSrc: "",
+        provider: type === "video" ? "youtube" : undefined,
+        categoryIds: type === "video" ? ["video-galerisi"] : [],
+        serviceSlugs: [],
+        districtSlugs: [],
+        blogSlugs: [],
+        tags: [],
+        active: true,
+        createdAt: now,
+        updatedAt: now,
+      },
+      ...currentItems,
+    ]);
+    setActiveSection("media");
+  };
+
+  const updateMediaItem = <Key extends keyof MediaItem>(
+    index: number,
+    key: Key,
+    value: MediaItem[Key],
+  ) => {
+    setMediaItems((currentItems) =>
+      currentItems.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [key]: value, updatedAt: new Date().toISOString() } : item,
+      ),
+    );
+  };
+
+  const toggleMediaListValue = (
+    index: number,
+    key: "categoryIds" | "serviceSlugs" | "districtSlugs" | "blogSlugs",
+    value: string,
+  ) => {
+    setMediaItems((currentItems) =>
+      currentItems.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
+
+        const nextValues = item[key].includes(value)
+          ? item[key].filter((currentValue) => currentValue !== value)
+          : [...item[key], value];
+
+        return { ...item, [key]: nextValues, updatedAt: new Date().toISOString() };
+      }),
+    );
   };
 
   const updateHeroImage = (value: string) => {
@@ -411,6 +488,13 @@ export function AdminContentEditor({
       value: `${services.length + 1}`,
     },
     {
+      id: "media",
+      icon: Film,
+      title: "Medya Kütüphanesi",
+      text: "Galeri, hizmet, ilçe ve blog medyaları.",
+      value: `${activeMediaCount}/${mediaItems.length}`,
+    },
+    {
       id: "reviews",
       icon: Star,
       title: "Google Yorumları",
@@ -446,16 +530,18 @@ export function AdminContentEditor({
     { label: "Bölge Sayfası", value: syncedDistrictPages.length, icon: FileText },
     { label: "Yorum", value: visibleReviewCount, icon: Star },
     { label: "Blog", value: `${publishedBlogCount}/${blogPosts.length}`, icon: FileText },
+    { label: "Medya", value: activeMediaCount, icon: Film },
   ];
 
   return (
     <div className="min-h-screen bg-[#eef1f0] px-3 py-3 text-slate-950 sm:px-5 lg:px-7">
-      <form action={saveAdminContentAction} className="mx-auto grid max-w-[1760px] gap-4 lg:grid-cols-[280px_1fr]">
+      <form action={saveAdminContentAction} encType="multipart/form-data" className="mx-auto grid max-w-[1760px] gap-4 lg:grid-cols-[280px_1fr]">
         <input type="hidden" name="serviceDistricts" value={JSON.stringify(serviceDistricts)} />
         <input type="hidden" name="districtPages" value={JSON.stringify(syncedDistrictPages)} />
         <input type="hidden" name="faqItems" value={JSON.stringify(faqItems)} />
         <input type="hidden" name="blogPosts" value={JSON.stringify(blogPosts)} />
         <input type="hidden" name="siteImages" value={JSON.stringify(siteImages)} />
+        <input type="hidden" name="mediaItems" value={JSON.stringify(mediaItems)} />
         <input type="hidden" name="googleReviews" value={JSON.stringify(googleReviews)} />
 
         <aside className="rounded-[28px] bg-white p-5 shadow-sm shadow-slate-200/80 lg:sticky lg:top-3 lg:min-h-[calc(100vh-24px)]">
@@ -607,6 +693,7 @@ export function AdminContentEditor({
               latestQuoteRequest={quoteRequests[0]}
               reviewCount={visibleReviewCount}
               onGoRequests={() => setActiveSection("requests")}
+              mediaCount={activeMediaCount}
             />
           ) : null}
 
@@ -643,6 +730,17 @@ export function AdminContentEditor({
             />
           ) : null}
 
+          {activeSection === "media" ? (
+            <MediaLibraryPanel
+              mediaItems={mediaItems}
+              blogPosts={blogPosts}
+              districts={serviceDistricts}
+              onAddMedia={addMediaItem}
+              onUpdateMedia={updateMediaItem}
+              onToggleMediaListValue={toggleMediaListValue}
+            />
+          ) : null}
+
           {activeSection === "reviews" ? (
             <ReviewsPanel
               reviews={googleReviews}
@@ -667,6 +765,7 @@ export function AdminContentEditor({
               onAddBlog={addBlogPost}
               onUpdateBlog={updateBlogPost}
               onRemoveBlog={removeBlogPost}
+              mediaItems={mediaItems}
             />
           ) : null}
 
@@ -685,6 +784,7 @@ type OverviewPanelProps = {
   quoteRequestCount: number;
   latestQuoteRequest?: QuoteRequest;
   reviewCount: number;
+  mediaCount: number;
   onGoRequests: () => void;
 };
 
@@ -696,6 +796,7 @@ function OverviewPanel({
   quoteRequestCount,
   latestQuoteRequest,
   reviewCount,
+  mediaCount,
   onGoRequests,
 }: OverviewPanelProps) {
   return (
@@ -712,6 +813,7 @@ function OverviewPanel({
           { label: "Hizmet bölgesi", value: districtCount, text: "Bölgeler sayfası ve ana sayfa şeridi" },
           { label: "Görsel alanı", value: services.length + 1, text: "Hero ve hizmet fotoğrafları" },
           { label: "Google yorumu", value: reviewCount, text: "Slider ve yorum alanlarında görünen kayıtlar" },
+          { label: "Medya kaydı", value: mediaCount, text: "Galeri, hizmet, ilçe ve bloglarda kullanılan kayıtlar" },
           { label: "SSS maddesi", value: faqCount, text: "Ana sayfadaki soru-cevap alanı" },
           { label: "Blog yazısı", value: blogCount, text: "Toplam kayıt" },
           { label: "Yayındaki blog", value: publishedBlogCount, text: "Blog sayfasında görünen yazılar" },
@@ -1053,6 +1155,292 @@ function ImageEditorCard({
         </label>
       </div>
     </article>
+  );
+}
+
+type MediaLibraryPanelProps = {
+  mediaItems: MediaItem[];
+  blogPosts: BlogPost[];
+  districts: string[];
+  onAddMedia: (type: MediaType) => void;
+  onUpdateMedia: <Key extends keyof MediaItem>(
+    index: number,
+    key: Key,
+    value: MediaItem[Key],
+  ) => void;
+  onToggleMediaListValue: (
+    index: number,
+    key: "categoryIds" | "serviceSlugs" | "districtSlugs" | "blogSlugs",
+    value: string,
+  ) => void;
+};
+
+function MediaLibraryPanel({
+  mediaItems,
+  blogPosts,
+  districts,
+  onAddMedia,
+  onUpdateMedia,
+  onToggleMediaListValue,
+}: MediaLibraryPanelProps) {
+  const activeBlogs = blogPosts.filter((post) => post.slug);
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80 sm:p-6">
+      <div className="mb-5 flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
+        <PanelHeader
+          title="Medya Kütüphanesi"
+          text="Fotoğraf ve videoları tek yerden yükleyip galeri, hizmet, ilçe ve bloglara bağla."
+        />
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onAddMedia("image")}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-5 text-sm font-black text-emerald-700 transition hover:bg-emerald-100"
+          >
+            <ImageIcon className="size-4" aria-hidden="true" />
+            Fotoğraf Ekle
+          </button>
+          <button
+            type="button"
+            onClick={() => onAddMedia("video")}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-5 text-sm font-black text-orange-700 transition hover:bg-orange-100"
+          >
+            <Film className="size-4" aria-hidden="true" />
+            Video Ekle
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-5 rounded-lg border border-cyan-100 bg-cyan-50 p-4 text-sm font-semibold leading-7 text-cyan-900">
+        Aynı medya kaydı birden fazla kategoriye, hizmete, ilçeye ve blog yazısına atanabilir.
+        Fotoğraf yüklenince sistem WebP versiyonunu üretir; video için YouTube/Vimeo linki ya da küçük MP4 dosyası kullanabilirsin.
+      </div>
+
+      <div className="grid gap-5">
+        {mediaItems.length > 0 ? (
+          mediaItems.map((item, index) => (
+            <article key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-start">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-11 place-items-center rounded-lg bg-white text-emerald-700 shadow-sm">
+                    {item.type === "video" ? <Film className="size-5" aria-hidden="true" /> : <ImageIcon className="size-5" aria-hidden="true" />}
+                  </span>
+                  <div>
+                    <p className="text-sm font-black text-slate-950">
+                      {item.title || (item.type === "video" ? "Video kaydı" : "Fotoğraf kaydı")}
+                    </p>
+                    <p className="mt-1 text-xs font-bold text-slate-500">
+                      {item.src ? item.src : "Henüz dosya/link eklenmedi"}
+                    </p>
+                  </div>
+                </div>
+                <label className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-black text-slate-950">
+                  <input
+                    type="checkbox"
+                    checked={item.active}
+                    onChange={(event) => onUpdateMedia(index, "active", event.target.checked)}
+                    className="size-4 accent-orange-500"
+                  />
+                  Aktif
+                </label>
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-[240px_1fr]">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-950">
+                    {item.type === "image" && item.src ? (
+                      <img src={item.src} alt="" className="h-full w-full object-cover" />
+                    ) : item.type === "video" && item.posterSrc ? (
+                      <img src={item.posterSrc} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="grid h-full place-items-center text-center text-xs font-black uppercase tracking-[0.12em] text-white/70">
+                        Önizleme
+                      </div>
+                    )}
+                  </div>
+                  <label className="mt-3 grid gap-2">
+                    <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                      {item.type === "video" ? "MP4 Yükle" : "Fotoğraf Yükle"}
+                    </span>
+                    <input
+                      name={`mediaFile-${item.id}`}
+                      type="file"
+                      accept={item.type === "video" ? "video/mp4,video/webm,video/quicktime" : "image/*"}
+                      className="block w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-orange-500 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-orange-600"
+                    />
+                  </label>
+                  {item.type === "video" ? (
+                    <label className="mt-3 grid gap-2">
+                      <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                        Poster Görseli
+                      </span>
+                      <input
+                        name={`mediaPosterFile-${item.id}`}
+                        type="file"
+                        accept="image/*"
+                        className="block w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-slate-800 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-slate-950"
+                      />
+                    </label>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <TextInput
+                      label="Başlık"
+                      value={item.title}
+                      onChange={(value) => onUpdateMedia(index, "title", value)}
+                    />
+                    <TextInput
+                      label="SEO Dosya Adı"
+                      value={item.fileName}
+                      onChange={(value) => onUpdateMedia(index, "fileName", slugify(value))}
+                    />
+                    <TextInput
+                      label="ALT Metni"
+                      value={item.alt}
+                      onChange={(value) => onUpdateMedia(index, "alt", value)}
+                    />
+                    {item.type === "video" ? (
+                      <label className="grid gap-2">
+                        <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                          Video Linki
+                        </span>
+                        <input
+                          value={item.src}
+                          onChange={(event) => onUpdateMedia(index, "src", event.target.value)}
+                          placeholder="YouTube veya Vimeo URL"
+                          className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
+                        />
+                      </label>
+                    ) : (
+                      <TextInput
+                        label="Görsel Yolu"
+                        value={item.src}
+                        onChange={(value) => onUpdateMedia(index, "src", value)}
+                      />
+                    )}
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="grid gap-2">
+                      <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                        Açıklama
+                      </span>
+                      <textarea
+                        value={item.description}
+                        onChange={(event) => onUpdateMedia(index, "description", event.target.value)}
+                        rows={3}
+                        className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-7 text-slate-950 outline-none transition focus:border-emerald-400"
+                      />
+                    </label>
+                    <label className="grid gap-2">
+                      <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                        Caption
+                      </span>
+                      <textarea
+                        value={item.caption}
+                        onChange={(event) => onUpdateMedia(index, "caption", event.target.value)}
+                        rows={3}
+                        className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-7 text-slate-950 outline-none transition focus:border-emerald-400"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="grid gap-2">
+                    <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                      <Tags className="size-3.5" aria-hidden="true" />
+                      Etiketler
+                    </span>
+                    <input
+                      value={item.tags.join(", ")}
+                      onChange={(event) =>
+                        onUpdateMedia(
+                          index,
+                          "tags",
+                          event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean),
+                        )
+                      }
+                      placeholder="paketleme, esenyurt, asansörlü"
+                      className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
+                    />
+                  </label>
+
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    <CheckboxGroup
+                      title="Kategoriler"
+                      options={mediaCategories.map((category) => ({ value: category.id, label: category.label }))}
+                      selectedValues={item.categoryIds}
+                      onToggle={(value) => onToggleMediaListValue(index, "categoryIds", value)}
+                    />
+                    <CheckboxGroup
+                      title="Hizmetler"
+                      options={services.map((service) => ({ value: service.slug, label: service.title }))}
+                      selectedValues={item.serviceSlugs}
+                      onToggle={(value) => onToggleMediaListValue(index, "serviceSlugs", value)}
+                    />
+                    <CheckboxGroup
+                      title="İlçeler"
+                      options={districts.map((district) => ({ value: createDistrictPageSlug(district), label: district }))}
+                      selectedValues={item.districtSlugs}
+                      onToggle={(value) => onToggleMediaListValue(index, "districtSlugs", value)}
+                    />
+                    <CheckboxGroup
+                      title="Blog Yazıları"
+                      options={activeBlogs.map((post) => ({ value: post.slug, label: post.title || post.slug }))}
+                      selectedValues={item.blogSlugs}
+                      onToggle={(value) => onToggleMediaListValue(index, "blogSlugs", value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))
+        ) : (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm font-semibold leading-7 text-slate-600">
+            Henüz medya kaydı yok. Fotoğraf veya video ekleyerek başlayabilirsin.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+type CheckboxGroupProps = {
+  title: string;
+  options: Array<{ value: string; label: string }>;
+  selectedValues: string[];
+  onToggle: (value: string) => void;
+};
+
+function CheckboxGroup({ title, options, selectedValues, onToggle }: CheckboxGroupProps) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
+      <p className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+        {title}
+      </p>
+      {options.length > 0 ? (
+        <div className="grid max-h-44 gap-2 overflow-y-auto pr-1">
+          {options.map((option) => (
+            <label
+              key={option.value}
+              className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-slate-50 px-3 text-xs font-black text-slate-700"
+            >
+              <input
+                type="checkbox"
+                checked={selectedValues.includes(option.value)}
+                onChange={() => onToggle(option.value)}
+                className="size-4 accent-orange-500"
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs font-semibold leading-5 text-slate-500">Seçenek yok.</p>
+      )}
+    </div>
   );
 }
 
@@ -1488,15 +1876,22 @@ function FaqPanel({ faqItems, onAddFaq, onUpdateFaq, onRemoveFaq }: FaqPanelProp
 
 type BlogPanelProps = {
   blogPosts: BlogPost[];
+  mediaItems: MediaItem[];
   onAddBlog: () => void;
-  onUpdateBlog: (index: number, key: keyof BlogPost, value: string | boolean) => void;
+  onUpdateBlog: (
+    index: number,
+    key: keyof BlogPost,
+    value: string | boolean | BlogMediaBlock[],
+  ) => void;
   onRemoveBlog: (index: number) => void;
 };
 
-function BlogPanel({ blogPosts, onAddBlog, onUpdateBlog, onRemoveBlog }: BlogPanelProps) {
+function BlogPanel({ blogPosts, mediaItems, onAddBlog, onUpdateBlog, onRemoveBlog }: BlogPanelProps) {
   const updateBlocks = (postIndex: number, blocks: ContentBlock[]) => {
     onUpdateBlog(postIndex, "content", serializeContentBlocks(blocks));
   };
+
+  const activeMediaItems = mediaItems.filter((item) => item.active && item.src);
 
   const addContentBlock = (postIndex: number, content: string, type: ContentBlockType) => {
     const defaults: Record<ContentBlockType, string> = {
@@ -1527,6 +1922,39 @@ function BlogPanel({ blogPosts, onAddBlog, onUpdateBlog, onRemoveBlog }: BlogPan
     updateBlocks(
       postIndex,
       parseContentBlocks(content).filter((_, index) => index !== blockIndex),
+    );
+  };
+
+  const addMediaBlock = (postIndex: number, post: BlogPost) => {
+    const firstMediaId = activeMediaItems[0]?.id;
+    const nextBlock: BlogMediaBlock = {
+      id: `blog-media-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title: "Yazı medyası",
+      layout: "grid",
+      mediaIds: firstMediaId ? [firstMediaId] : [],
+    };
+
+    onUpdateBlog(postIndex, "mediaBlocks", [...(post.mediaBlocks || []), nextBlock]);
+  };
+
+  const updateMediaBlock = (
+    postIndex: number,
+    post: BlogPost,
+    blockIndex: number,
+    nextBlock: BlogMediaBlock,
+  ) => {
+    onUpdateBlog(
+      postIndex,
+      "mediaBlocks",
+      (post.mediaBlocks || []).map((block, index) => (index === blockIndex ? nextBlock : block)),
+    );
+  };
+
+  const removeMediaBlock = (postIndex: number, post: BlogPost, blockIndex: number) => {
+    onUpdateBlog(
+      postIndex,
+      "mediaBlocks",
+      (post.mediaBlocks || []).filter((_, index) => index !== blockIndex),
     );
   };
 
@@ -1673,6 +2101,43 @@ function BlogPanel({ blogPosts, onAddBlog, onUpdateBlog, onRemoveBlog }: BlogPan
                 )}
               </div>
             </div>
+
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                    Medya Blokları
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    Bu yazıya fotoğraf galerisi, tek görsel veya video bloğu ekle.
+                  </p>
+                </div>
+                <EditorToolButton
+                  icon={ImageIcon}
+                  label="Medya Bloğu"
+                  onClick={() => addMediaBlock(index, post)}
+                />
+              </div>
+
+              <div className="grid gap-3">
+                {(post.mediaBlocks || []).length > 0 ? (
+                  (post.mediaBlocks || []).map((block, blockIndex) => (
+                    <BlogMediaBlockEditor
+                      key={block.id || blockIndex}
+                      block={block}
+                      index={blockIndex}
+                      mediaItems={activeMediaItems}
+                      onChange={(nextBlock) => updateMediaBlock(index, post, blockIndex, nextBlock)}
+                      onRemove={() => removeMediaBlock(index, post, blockIndex)}
+                    />
+                  ))
+                ) : (
+                  <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold leading-7 text-slate-600">
+                    Bu yazıya atanmış medya bloğu yok. İstersen medya kütüphanesindeki kayıtları seçerek SEO açısından daha zengin bir yazı oluşturabilirsin.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -1814,6 +2279,103 @@ function ContentBlockEditor({ block, index, onChange, onRemove }: ContentBlockEd
           className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-7 text-slate-950 outline-none transition focus:border-emerald-400"
         />
       )}
+    </div>
+  );
+}
+
+type BlogMediaBlockEditorProps = {
+  block: BlogMediaBlock;
+  index: number;
+  mediaItems: MediaItem[];
+  onChange: (block: BlogMediaBlock) => void;
+  onRemove: () => void;
+};
+
+function BlogMediaBlockEditor({
+  block,
+  index,
+  mediaItems,
+  onChange,
+  onRemove,
+}: BlogMediaBlockEditorProps) {
+  const toggleMedia = (mediaId: string) => {
+    const mediaIds = block.mediaIds.includes(mediaId)
+      ? block.mediaIds.filter((currentId) => currentId !== mediaId)
+      : [...block.mediaIds, mediaId];
+
+    onChange({ ...block, mediaIds });
+  };
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="grid size-10 place-items-center rounded-lg bg-orange-50 text-orange-700">
+            <ImageIcon className="size-5" aria-hidden="true" />
+          </span>
+          <div>
+            <p className="text-sm font-black text-slate-950">Medya Blok {index + 1}</p>
+            <p className="text-xs font-semibold text-slate-500">
+              Seçilen medya yazı detayında responsive ve lightbox destekli görünür.
+            </p>
+          </div>
+        </div>
+        <IconButton label={`${index + 1}. medya bloğunu sil`} onClick={onRemove} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <TextInput
+          label="Blok Başlığı"
+          value={block.title}
+          onChange={(value) => onChange({ ...block, title: value })}
+        />
+        <label className="grid gap-2">
+          <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+            Yerleşim
+          </span>
+          <select
+            value={block.layout}
+            onChange={(event) =>
+              onChange({ ...block, layout: event.target.value as BlogMediaBlock["layout"] })
+            }
+            className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-400"
+          >
+            <option value="grid">Galeri Grid</option>
+            <option value="single">Tek Görsel</option>
+            <option value="video">Video Bloğu</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <p className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+          Medya Seç
+        </p>
+        {mediaItems.length > 0 ? (
+          <div className="grid max-h-56 gap-2 overflow-y-auto pr-1 md:grid-cols-2">
+            {mediaItems.map((item) => (
+              <label
+                key={item.id}
+                className="flex min-h-11 items-center gap-2 rounded-lg bg-white px-3 text-xs font-black text-slate-700"
+              >
+                <input
+                  type="checkbox"
+                  checked={block.mediaIds.includes(item.id)}
+                  onChange={() => toggleMedia(item.id)}
+                  className="size-4 accent-orange-500"
+                />
+                <span className="min-w-0 truncate">
+                  {item.type === "video" ? "Video" : "Fotoğraf"} · {item.title || item.alt || item.id}
+                </span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs font-semibold leading-5 text-slate-500">
+            Önce Medya Kütüphanesi sekmesinden aktif bir medya kaydı eklemelisin.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

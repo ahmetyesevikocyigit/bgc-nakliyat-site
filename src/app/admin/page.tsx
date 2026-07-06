@@ -6,6 +6,7 @@ import { AdminContentEditor } from "@/components/admin-content-editor";
 import { AdminSessionGuard } from "@/components/admin-session-guard";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getEditableContent } from "@/lib/editable-content";
+import { getMediaLibrary } from "@/lib/media-library";
 import { getQuoteRequests } from "@/lib/quote-requests";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <AdminSessionGuard />
       <AdminContentEditor
         content={await getEditableContent()}
+        mediaItems={await getMediaLibrary()}
         quoteRequests={await getQuoteRequests()}
         saved={params?.saved === "1"}
         hasContentError={params?.error === "content"}

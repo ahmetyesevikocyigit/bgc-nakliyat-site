@@ -8,6 +8,13 @@ export type FaqItem = {
   answer: string;
 };
 
+export type BlogMediaBlock = {
+  id: string;
+  title: string;
+  layout: "single" | "grid" | "video";
+  mediaIds: string[];
+};
+
 export type BlogPost = {
   title: string;
   slug: string;
@@ -15,6 +22,7 @@ export type BlogPost = {
   seoDescription: string;
   excerpt: string;
   content: string;
+  mediaBlocks: BlogMediaBlock[];
   date: string;
   published: boolean;
 };
@@ -219,6 +227,40 @@ function normalizeDistrictPages(
   });
 }
 
+function normalizeBlogMediaBlocks(value: unknown): BlogMediaBlock[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((block) => {
+      if (!block || typeof block !== "object") {
+        return null;
+      }
+
+      const source = block as Partial<BlogMediaBlock>;
+      const mediaIds = Array.isArray(source.mediaIds)
+        ? Array.from(
+            new Set(
+              source.mediaIds
+                .filter((mediaId): mediaId is string => typeof mediaId === "string")
+                .map((mediaId) => mediaId.trim())
+                .filter(Boolean),
+            ),
+          )
+        : [];
+
+      return {
+        id: typeof source.id === "string" && source.id.trim() ? source.id.trim() : createSlug(source.title || "medya-blok"),
+        title: typeof source.title === "string" ? source.title.trim() : "",
+        layout: source.layout === "single" || source.layout === "video" ? source.layout : "grid",
+        mediaIds,
+      } satisfies BlogMediaBlock;
+    })
+    .filter((block): block is BlogMediaBlock => Boolean(block))
+    .filter((block) => block.mediaIds.length > 0);
+}
+
 function normalizeContent(content: Partial<EditableContent>): EditableContent {
   const serviceDistricts = Array.from(
     new Set((content.serviceDistricts || []).map((district) => district.trim()).filter(Boolean)),
@@ -259,6 +301,7 @@ function normalizeContent(content: Partial<EditableContent>): EditableContent {
         seoDescription: (source.seoDescription || excerpt).trim(),
         excerpt,
         content: blogContent,
+        mediaBlocks: normalizeBlogMediaBlocks(source.mediaBlocks),
         date: (source.date || "").trim(),
         published: Boolean(source.published),
       };
@@ -285,7 +328,7 @@ function normalizeContent(content: Partial<EditableContent>): EditableContent {
 export async function getEditableContent(): Promise<EditableContent> {
   const content = await readStoreJson<Partial<EditableContent>>(
     "editable-content",
-    editableContentData as Partial<EditableContent>,
+    editableContentData as unknown as Partial<EditableContent>,
   );
 
   return normalizeContent(content);

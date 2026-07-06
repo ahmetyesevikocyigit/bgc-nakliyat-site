@@ -72,6 +72,13 @@ function ServiceShowcaseCard({
       </h3>
       <p className="mt-5 text-sm leading-7 text-slate-700">{service.summary}</p>
       <p className="mt-3 text-sm leading-7 text-slate-600">{service.details}</p>
+      <Link
+        href={`/hizmetler/${service.slug}`}
+        className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-5 text-sm font-black text-cyan-800 transition hover:bg-cyan-100"
+      >
+        Detayı Gör
+        <ArrowRight className="size-4" aria-hidden="true" />
+      </Link>
     </article>
   );
 }

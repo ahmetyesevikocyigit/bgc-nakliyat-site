@@ -1,9 +1,10 @@
-type StoreKey = "editable-content" | "quote-requests" | "admin-settings";
+type StoreKey = "editable-content" | "quote-requests" | "admin-settings" | "media-library";
 
 const localFileNameByKey: Record<StoreKey, string> = {
   "editable-content": "editable-content.json",
   "quote-requests": "quote-requests.json",
   "admin-settings": "admin-settings.json",
+  "media-library": "media-library.json",
 };
 
 function getRedisConfig() {

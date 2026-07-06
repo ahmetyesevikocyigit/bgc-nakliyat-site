@@ -1,7 +1,10 @@
 "use server";
 
 import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
+import { randomUUID } from "node:crypto";
+import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -15,11 +18,19 @@ import {
   getEditableContent,
   saveEditableContent,
   type BlogPost,
+  type BlogMediaBlock,
   type DistrictPageContent,
   type EditableGoogleReview,
   type FaqItem,
   type SiteImageSettings,
 } from "@/lib/editable-content";
+import {
+  getMediaLibrary,
+  normalizeMediaLibrary,
+  parseVideoUrl,
+  saveMediaLibrary,
+  type MediaItem,
+} from "@/lib/media-library";
 import { createDistrictSlug, createSlug } from "@/lib/slug";
 import { services } from "@/lib/site-data";
 
@@ -103,6 +114,22 @@ function parseBlogPosts(value: FormDataEntryValue | null): BlogPost[] {
           : item.excerpt,
       excerpt: item.excerpt,
       content: item.content,
+      mediaBlocks:
+        "mediaBlocks" in item && Array.isArray(item.mediaBlocks)
+          ? (item.mediaBlocks.filter(
+              (block): block is BlogMediaBlock =>
+                typeof block === "object" &&
+                block !== null &&
+                "id" in block &&
+                "title" in block &&
+                "layout" in block &&
+                "mediaIds" in block &&
+                typeof block.id === "string" &&
+                typeof block.title === "string" &&
+                (block.layout === "single" || block.layout === "grid" || block.layout === "video") &&
+                Array.isArray(block.mediaIds),
+            ) as BlogMediaBlock[])
+          : [],
       date: item.date,
       published: item.published,
     }));
@@ -211,6 +238,14 @@ function parseGoogleReviews(value: FormDataEntryValue | null): EditableGoogleRev
     }));
 }
 
+function parseMediaItems(value: FormDataEntryValue | null): MediaItem[] {
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  return normalizeMediaLibrary(JSON.parse(value) as unknown);
+}
+
 function getUploadExtension(file: File) {
   const extension = extname(file.name).toLowerCase();
 
@@ -226,7 +261,92 @@ function getUploadExtension(file: File) {
     return ".webp";
   }
 
+  if (file.type === "video/mp4") {
+    return ".mp4";
+  }
+
   return ".jpg";
+}
+
+function getSafeFileBase(value: string, fallback: string) {
+  return createSlug(value || fallback) || fallback;
+}
+
+function getMediaUploadDirectory() {
+  const now = new Date();
+  const year = String(now.getFullYear());
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const relativeDirectory = `/uploads/media/${year}/${month}`;
+  const absoluteDirectory = join(process.cwd(), "public", "uploads", "media", year, month);
+
+  return { absoluteDirectory, relativeDirectory };
+}
+
+async function saveMediaUpload(
+  fileValue: FormDataEntryValue | null,
+  key: string,
+  preferredFileName: string,
+  type: "image" | "video",
+) {
+  if (!(fileValue instanceof File) || fileValue.size === 0) {
+    return null;
+  }
+
+  if (type === "image" && !fileValue.type.startsWith("image/")) {
+    return null;
+  }
+
+  if (type === "video" && !fileValue.type.startsWith("video/")) {
+    return null;
+  }
+
+  if (type === "video" && fileValue.size > 90_000_000) {
+    return null;
+  }
+
+  const bytes = Buffer.from(await fileValue.arrayBuffer());
+  const { absoluteDirectory, relativeDirectory } = getMediaUploadDirectory();
+  await mkdir(absoluteDirectory, { recursive: true });
+
+  const safeBase = getSafeFileBase(preferredFileName, key);
+  const timestamp = Date.now();
+
+  if (type === "video") {
+    const extension = extname(fileValue.name).toLowerCase() || (fileValue.type === "video/webm" ? ".webm" : ".mp4");
+    const videoName = `${safeBase}-${timestamp}${extension}`;
+    await writeFile(join(absoluteDirectory, videoName), bytes);
+
+    return {
+      src: `${relativeDirectory}/${videoName}`,
+      originalSrc: undefined,
+    };
+  }
+
+  const originalExtension = getUploadExtension(fileValue);
+  const originalName = `${safeBase}-${timestamp}${originalExtension}`;
+  const webpName = `${safeBase}-${timestamp}.webp`;
+  const originalPath = join(absoluteDirectory, originalName);
+  const webpPath = join(absoluteDirectory, webpName);
+
+  await writeFile(originalPath, bytes);
+
+  try {
+    await sharp(bytes)
+      .rotate()
+      .resize({ width: 1800, withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toFile(webpPath);
+
+    return {
+      src: `${relativeDirectory}/${webpName}`,
+      originalSrc: `${relativeDirectory}/${originalName}`,
+    };
+  } catch {
+    return {
+      src: `${relativeDirectory}/${originalName}`,
+      originalSrc: `${relativeDirectory}/${originalName}`,
+    };
+  }
 }
 
 async function saveUploadedImage(fileValue: FormDataEntryValue | null, key: string) {
@@ -281,6 +401,7 @@ export async function saveAdminContentAction(formData: FormData) {
   }
 
   const previousContent = await getEditableContent();
+  const previousMediaItems = await getMediaLibrary();
   const previousBlogSlugs = previousContent.blogPosts.map((post) => post.slug).filter(Boolean);
   const previousDistrictSlugs = previousContent.districtPages.map((page) => page.slug).filter(Boolean);
   const serviceDistricts = parseDistricts(formData.get("serviceDistricts"));
@@ -289,6 +410,7 @@ export async function saveAdminContentAction(formData: FormData) {
   const blogPosts = parseBlogPosts(formData.get("blogPosts"));
   const siteImages = await parseSiteImages(formData.get("siteImages"));
   const googleReviews = parseGoogleReviews(formData.get("googleReviews"));
+  const mediaItems = parseMediaItems(formData.get("mediaItems"));
   const uploadedHeroImage = await saveUploadedImage(formData.get("heroImageFile"), "hero");
 
   if (uploadedHeroImage) {
@@ -309,6 +431,37 @@ export async function saveAdminContentAction(formData: FormData) {
   if (serviceDistricts.length === 0 || faqItems.length === 0) {
     redirect("/admin?error=content");
   }
+
+  const now = new Date().toISOString();
+  const processedMediaItems = await Promise.all(
+    mediaItems.map(async (item) => {
+      const previousItem = previousMediaItems.find((previous) => previous.id === item.id);
+      const mediaFile = await saveMediaUpload(
+        formData.get(`mediaFile-${item.id}`),
+        item.id,
+        item.fileName || item.title || item.alt,
+        item.type,
+      );
+      const posterFile = await saveMediaUpload(
+        formData.get(`mediaPosterFile-${item.id}`),
+        `${item.id}-poster`,
+        `${item.fileName || item.title || item.alt}-poster`,
+        "image",
+      );
+      const parsedVideo = item.type === "video" && item.provider !== "upload" ? parseVideoUrl(item.src) : null;
+
+      return {
+        ...item,
+        id: item.id || randomUUID(),
+        src: mediaFile?.src || parsedVideo?.src || item.src,
+        originalSrc: mediaFile?.originalSrc || item.originalSrc,
+        posterSrc: posterFile?.src || item.posterSrc,
+        provider: item.type === "video" ? mediaFile ? "upload" : parsedVideo?.provider || item.provider : undefined,
+        createdAt: item.createdAt || previousItem?.createdAt || now,
+        updatedAt: now,
+      } satisfies MediaItem;
+    }),
+  );
 
   const currentPassword = formData.get("currentPassword");
   const newPassword = formData.get("newPassword");
@@ -339,9 +492,12 @@ export async function saveAdminContentAction(formData: FormData) {
   }
 
   await saveEditableContent({ serviceDistricts, districtPages, faqItems, blogPosts, siteImages, googleReviews });
+  await saveMediaLibrary(processedMediaItems);
 
   revalidatePath("/");
   revalidatePath("/hizmetler");
+  services.forEach((service) => revalidatePath(`/hizmetler/${service.slug}`));
+  revalidatePath("/galeri");
   revalidatePath("/api/google-reviews");
   revalidatePath("/bolgeler");
   Array.from(
