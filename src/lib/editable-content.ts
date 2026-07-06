@@ -112,7 +112,7 @@ export function createDefaultDistrictPage(district: string): DistrictPageContent
   return {
     district,
     slug,
-    seoTitle: `${district} Evden Eve Nakliyat | ${company.name}`,
+    seoTitle: `${district} Evden Eve Nakliyat`,
     seoDescription: `${district} evden eve nakliyat, parça eşya, ofis taşıma ve asansörlü taşıma hizmetleri için ${company.name} ile hızlı teklif alın.`,
     html: [
       `<h2>${district} evden eve nakliyat süreci nasıl planlanır?</h2>`,

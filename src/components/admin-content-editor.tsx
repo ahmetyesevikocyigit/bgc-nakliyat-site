@@ -84,7 +84,7 @@ function createDefaultDistrictPage(district: string): DistrictPageContent {
   return {
     district,
     slug: createDistrictPageSlug(district),
-    seoTitle: `${district} Evden Eve Nakliyat | BGC Nakliyat`,
+    seoTitle: `${district} Evden Eve Nakliyat`,
     seoDescription: `${district} evden eve nakliyat, parça eşya ve asansörlü taşıma hizmetleri için BGC Nakliyat ile hızlı teklif alın.`,
     html: [
       `<h2>${district} evden eve nakliyat hizmeti</h2>`,
