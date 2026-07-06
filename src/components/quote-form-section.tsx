@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Send } from "lucide-react";
 import { services } from "@/lib/site-data";
 
-const maxMessageLength = 500;
+const maxMessageLength = 1000;
 const inputClassName =
   "min-h-12 rounded-lg border border-slate-600 bg-black/58 px-4 text-sm font-semibold text-white outline-none transition placeholder:text-slate-500 focus:border-orange-400";
 
@@ -39,14 +39,27 @@ export function QuoteFormSection() {
             const email = String(formData.get("email") || "");
             const phone = String(formData.get("phone") || "");
             const service = String(formData.get("service") || "");
+            const fromAddress = String(formData.get("fromAddress") || "");
+            const toAddress = String(formData.get("toAddress") || "");
+            const fromFloor = String(formData.get("fromFloor") || "");
+            const toFloor = String(formData.get("toFloor") || "");
+            const roomCount = String(formData.get("roomCount") || "");
+            const moveDate = String(formData.get("moveDate") || "");
+            const elevatorNeed = String(formData.get("elevatorNeed") || "");
             const details = String(formData.get("message") || "");
-            const quoteRequest = { fullName, email, phone, service, message: details };
             const text = [
               "Merhaba, ücretsiz nakliyat teklifi almak istiyorum.",
               `Ad Soyad: ${fullName}`,
               `E-posta: ${email}`,
               `Telefon: ${phone}`,
               `Hizmet Türü: ${service}`,
+              fromAddress ? `Çıkış Adresi: ${fromAddress}` : "",
+              toAddress ? `Varış Adresi: ${toAddress}` : "",
+              fromFloor ? `Çıkış Katı: ${fromFloor}` : "",
+              toFloor ? `Varış Katı: ${toFloor}` : "",
+              roomCount ? `Oda Sayısı: ${roomCount}` : "",
+              moveDate ? `Taşınma Tarihi: ${moveDate}` : "",
+              elevatorNeed ? `Asansör İhtiyacı: ${elevatorNeed}` : "",
               details ? `Mesaj: ${details}` : "",
             ]
               .filter(Boolean)
@@ -57,8 +70,7 @@ export function QuoteFormSection() {
             try {
               await fetch("/api/quote-requests", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(quoteRequest),
+                body: formData,
               });
             } catch {
               // WhatsApp yönlendirmesi yine de çalışmalı.
@@ -109,6 +121,81 @@ export function QuoteFormSection() {
                   </option>
                 ))}
               </select>
+            </QuoteField>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <QuoteField label="Çıkış Adresi">
+              <input
+                name="fromAddress"
+                type="text"
+                placeholder="Mevcut adres / ilçe"
+                className={inputClassName}
+              />
+            </QuoteField>
+
+            <QuoteField label="Varış Adresi">
+              <input
+                name="toAddress"
+                type="text"
+                placeholder="Yeni adres / ilçe"
+                className={inputClassName}
+              />
+            </QuoteField>
+
+            <QuoteField label="Çıkış Katı">
+              <input
+                name="fromFloor"
+                type="text"
+                placeholder="Örn. 4. kat, asansör var"
+                className={inputClassName}
+              />
+            </QuoteField>
+
+            <QuoteField label="Varış Katı">
+              <input
+                name="toFloor"
+                type="text"
+                placeholder="Örn. 2. kat"
+                className={inputClassName}
+              />
+            </QuoteField>
+
+            <QuoteField label="Oda Sayısı">
+              <select name="roomCount" defaultValue="" className={inputClassName}>
+                <option value="">Seçin</option>
+                {["1+0", "1+1", "2+1", "3+1", "4+1", "Villa / dubleks", "Ofis", "Parça eşya"].map(
+                  (option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ),
+                )}
+              </select>
+            </QuoteField>
+
+            <QuoteField label="Taşınma Tarihi">
+              <input name="moveDate" type="date" className={inputClassName} />
+            </QuoteField>
+
+            <QuoteField label="Asansör İhtiyacı">
+              <select name="elevatorNeed" defaultValue="" className={inputClassName}>
+                <option value="">Seçin</option>
+                <option value="Dış cephe asansörü gerekebilir">Dış cephe asansörü gerekebilir</option>
+                <option value="Bina asansörü var">Bina asansörü var</option>
+                <option value="Asansör yok">Asansör yok</option>
+                <option value="Keşifte netleşsin">Keşifte netleşsin</option>
+              </select>
+            </QuoteField>
+
+            <QuoteField label="Eşya Fotoğrafları">
+              <input
+                name="photos"
+                type="file"
+                accept="image/*"
+                multiple
+                className="block min-h-12 w-full rounded-lg border border-dashed border-slate-600 bg-black/58 px-4 py-3 text-sm font-semibold text-white file:mr-3 file:rounded-full file:border-0 file:bg-orange-500 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-orange-600"
+              />
             </QuoteField>
           </div>
 

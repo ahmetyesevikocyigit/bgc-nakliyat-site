@@ -22,6 +22,7 @@ import {
   type DistrictPageContent,
   type EditableGoogleReview,
   type FaqItem,
+  type PortfolioJob,
   type SiteImageSettings,
 } from "@/lib/editable-content";
 import {
@@ -246,11 +247,67 @@ function parseMediaItems(value: FormDataEntryValue | null): MediaItem[] {
   return normalizeMediaLibrary(JSON.parse(value) as unknown);
 }
 
+function parseStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+function parsePortfolioJobs(value: FormDataEntryValue | null): PortfolioJob[] {
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  const parsedValue = JSON.parse(value) as unknown;
+
+  if (!Array.isArray(parsedValue)) {
+    return [];
+  }
+
+  return parsedValue
+    .filter(
+      (item): item is PortfolioJob =>
+        typeof item === "object" &&
+        item !== null &&
+        "id" in item &&
+        "title" in item &&
+        "slug" in item &&
+        "description" in item &&
+        "completedAt" in item &&
+        "serviceSlugs" in item &&
+        "districtSlugs" in item &&
+        "mediaIds" in item &&
+        "tags" in item &&
+        "published" in item &&
+        typeof item.id === "string" &&
+        typeof item.title === "string" &&
+        typeof item.slug === "string" &&
+        typeof item.description === "string" &&
+        typeof item.completedAt === "string" &&
+        typeof item.published === "boolean",
+    )
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      slug: item.slug,
+      description: item.description,
+      completedAt: item.completedAt,
+      serviceSlugs: parseStringList(item.serviceSlugs),
+      districtSlugs: parseStringList(item.districtSlugs),
+      mediaIds: parseStringList(item.mediaIds),
+      tags: parseStringList(item.tags),
+      published: item.published,
+    }));
+}
+
 const adminSectionIds = new Set([
   "overview",
   "requests",
   "images",
   "media",
+  "portfolio",
   "reviews",
   "districts",
   "districtPages",
@@ -434,6 +491,7 @@ export async function saveAdminContentAction(formData: FormData) {
   const siteImages = await parseSiteImages(formData.get("siteImages"));
   const googleReviews = parseGoogleReviews(formData.get("googleReviews"));
   const mediaItems = parseMediaItems(formData.get("mediaItems"));
+  const portfolioJobs = parsePortfolioJobs(formData.get("portfolioJobs"));
   const uploadedHeroImage = await saveUploadedImage(formData.get("heroImageFile"), "hero");
 
   if (uploadedHeroImage) {
@@ -514,7 +572,15 @@ export async function saveAdminContentAction(formData: FormData) {
     }
   }
 
-  await saveEditableContent({ serviceDistricts, districtPages, faqItems, blogPosts, siteImages, googleReviews });
+  await saveEditableContent({
+    serviceDistricts,
+    districtPages,
+    faqItems,
+    blogPosts,
+    siteImages,
+    googleReviews,
+    portfolioJobs,
+  });
   await saveMediaLibrary(processedMediaItems);
 
   revalidatePath("/");

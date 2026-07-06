@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { ActionLinks } from "@/components/action-links";
 import { MediaGallery } from "@/components/media-gallery";
+import { PortfolioJobsSection } from "@/components/portfolio-jobs-section";
 import { getEditableContent } from "@/lib/editable-content";
 import { getMediaForGallery, getMediaLibrary } from "@/lib/media-library";
 import { company, services } from "@/lib/site-data";
@@ -30,6 +31,7 @@ async function getServicePageData(slug: string) {
       ...service,
       image: content.siteImages.serviceImages[service.slug] || service.image,
     },
+    portfolioJobs: content.portfolioJobs,
   };
 }
 
@@ -62,9 +64,11 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
     notFound();
   }
 
-  const { service } = pageData;
+  const { service, portfolioJobs } = pageData;
   const Icon = service.icon;
-  const mediaItems = getMediaForGallery(await getMediaLibrary(), { serviceSlug: service.slug });
+  const mediaLibrary = await getMediaLibrary();
+  const mediaItems = getMediaForGallery(mediaLibrary, { serviceSlug: service.slug });
+  const serviceJobs = portfolioJobs.filter((job) => job.serviceSlugs.includes(service.slug));
 
   return (
     <>
@@ -148,6 +152,14 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
         title={`${service.title} gerçek çalışmalar`}
         text="Bu hizmete atanmış fotoğraf ve videolar otomatik olarak burada listelenir."
         emptyText="Bu hizmete atanmış aktif medya kaydı henüz yok."
+      />
+
+      <PortfolioJobsSection
+        jobs={serviceJobs}
+        mediaItems={mediaLibrary}
+        title={`${service.title} yapılan işler`}
+        text="Admin panelinden bu hizmete bağlanan tamamlanmış taşıma işleri otomatik olarak burada listelenir."
+        emptyText="Bu hizmete atanmış yayınlanmış yapılan iş kaydı henüz yok."
       />
     </>
   );

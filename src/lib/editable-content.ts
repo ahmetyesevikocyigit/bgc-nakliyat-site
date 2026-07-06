@@ -27,6 +27,19 @@ export type BlogPost = {
   published: boolean;
 };
 
+export type PortfolioJob = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  completedAt: string;
+  serviceSlugs: string[];
+  districtSlugs: string[];
+  mediaIds: string[];
+  tags: string[];
+  published: boolean;
+};
+
 export type DistrictPageContent = {
   district: string;
   slug: string;
@@ -55,6 +68,7 @@ export type EditableContent = {
   blogPosts: BlogPost[];
   siteImages: SiteImageSettings;
   googleReviews: EditableGoogleReview[];
+  portfolioJobs: PortfolioJob[];
 };
 
 const allowedHtmlTags = new Set([
@@ -261,6 +275,58 @@ function normalizeBlogMediaBlocks(value: unknown): BlogMediaBlock[] {
     .filter((block) => block.mediaIds.length > 0);
 }
 
+function normalizeStringList(value: unknown, maxItems = 80): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ).slice(0, maxItems);
+}
+
+function normalizePortfolioJobs(content: Partial<EditableContent>): PortfolioJob[] {
+  const sourceJobs = Array.isArray(content.portfolioJobs) ? content.portfolioJobs : [];
+  const usedSlugs = new Set<string>();
+
+  return sourceJobs
+    .map((job) => {
+      const source = job as Partial<PortfolioJob>;
+      const title = typeof source.title === "string" ? source.title.trim() : "";
+      const baseSlug = createSlug(source.slug || title || "yapilan-is");
+      let slug = baseSlug;
+      let suffix = 2;
+
+      while (slug && usedSlugs.has(slug)) {
+        slug = `${baseSlug}-${suffix}`;
+        suffix += 1;
+      }
+
+      if (slug) {
+        usedSlugs.add(slug);
+      }
+
+      return {
+        id: typeof source.id === "string" && source.id.trim() ? source.id.trim() : createSlug(`${title}-${Date.now()}`),
+        title,
+        slug,
+        description: typeof source.description === "string" ? source.description.trim().slice(0, 1200) : "",
+        completedAt: typeof source.completedAt === "string" ? source.completedAt.trim() : "",
+        serviceSlugs: normalizeStringList(source.serviceSlugs, 20),
+        districtSlugs: normalizeStringList(source.districtSlugs, 40),
+        mediaIds: normalizeStringList(source.mediaIds, 80),
+        tags: normalizeStringList(source.tags, 30),
+        published: Boolean(source.published),
+      } satisfies PortfolioJob;
+    })
+    .filter((job) => job.title && job.slug);
+}
+
 function normalizeContent(content: Partial<EditableContent>): EditableContent {
   const serviceDistricts = Array.from(
     new Set((content.serviceDistricts || []).map((district) => district.trim()).filter(Boolean)),
@@ -321,8 +387,17 @@ function normalizeContent(content: Partial<EditableContent>): EditableContent {
     serviceImages,
   };
   const googleReviews = normalizeGoogleReviews(content);
+  const portfolioJobs = normalizePortfolioJobs(content);
 
-  return { serviceDistricts, districtPages, faqItems, blogPosts, siteImages, googleReviews };
+  return {
+    serviceDistricts,
+    districtPages,
+    faqItems,
+    blogPosts,
+    siteImages,
+    googleReviews,
+    portfolioJobs,
+  };
 }
 
 export async function getEditableContent(): Promise<EditableContent> {

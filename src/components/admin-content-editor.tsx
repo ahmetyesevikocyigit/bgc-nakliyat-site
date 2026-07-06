@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   AlignLeft,
+  BriefcaseBusiness,
   CalendarClock,
   FileText,
   Film,
@@ -33,6 +34,7 @@ import type {
   EditableContent,
   EditableGoogleReview,
   FaqItem,
+  PortfolioJob,
   SiteImageSettings,
 } from "@/lib/editable-content";
 import { mediaCategories, type MediaItem, type MediaType } from "@/lib/media-library";
@@ -44,6 +46,7 @@ type AdminSection =
   | "requests"
   | "images"
   | "media"
+  | "portfolio"
   | "reviews"
   | "districts"
   | "districtPages"
@@ -200,6 +203,7 @@ function isAdminSection(value: unknown): value is AdminSection {
       "requests",
       "images",
       "media",
+      "portfolio",
       "reviews",
       "districts",
       "districtPages",
@@ -243,6 +247,7 @@ export function AdminContentEditor({
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(content.blogPosts);
   const [siteImages, setSiteImages] = useState<SiteImageSettings>(content.siteImages);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>(initialMediaItems);
+  const [portfolioJobs, setPortfolioJobs] = useState<PortfolioJob[]>(content.portfolioJobs);
   const [siteImagePreviews, setSiteImagePreviews] = useState<Record<string, string>>({});
   const [mediaFilePreviews, setMediaFilePreviews] = useState<Record<string, string>>({});
   const [mediaPosterPreviews, setMediaPosterPreviews] = useState<Record<string, string>>({});
@@ -253,6 +258,7 @@ export function AdminContentEditor({
 
   const publishedBlogCount = blogPosts.filter((post) => post.published).length;
   const activeMediaCount = mediaItems.filter((item) => item.active && item.src).length;
+  const publishedPortfolioCount = portfolioJobs.filter((job) => job.published).length;
   const visibleReviewCount = googleReviews.filter((review) => review.author && review.text).length;
   const syncedDistrictPages = syncDistrictPages(serviceDistricts, districtPages);
   const selectedDistrictPage =
@@ -506,6 +512,72 @@ export function AdminContentEditor({
     }));
   };
 
+  const addPortfolioJob = () => {
+    const title = "Yeni Yapılan İş";
+    const id = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    setPortfolioJobs((currentJobs) => [
+      {
+        id,
+        title,
+        slug: `${slugify(title)}-${currentJobs.length + 1}`,
+        description: "",
+        completedAt: today(),
+        serviceSlugs: [],
+        districtSlugs: [],
+        mediaIds: [],
+        tags: [],
+        published: true,
+      },
+      ...currentJobs,
+    ]);
+    setActiveSection("portfolio");
+  };
+
+  const updatePortfolioJob = <Key extends keyof PortfolioJob>(
+    index: number,
+    key: Key,
+    value: PortfolioJob[Key],
+  ) => {
+    setPortfolioJobs((currentJobs) =>
+      currentJobs.map((job, jobIndex) => {
+        if (jobIndex !== index) {
+          return job;
+        }
+
+        if (key === "title" && !job.slug) {
+          return { ...job, title: String(value), slug: slugify(String(value)) };
+        }
+
+        return { ...job, [key]: value };
+      }),
+    );
+  };
+
+  const removePortfolioJob = (index: number) => {
+    setPortfolioJobs((currentJobs) => currentJobs.filter((_, jobIndex) => jobIndex !== index));
+  };
+
+  const togglePortfolioListValue = (
+    index: number,
+    key: "serviceSlugs" | "districtSlugs" | "mediaIds",
+    value: string,
+  ) => {
+    setPortfolioJobs((currentJobs) =>
+      currentJobs.map((job, jobIndex) => {
+        if (jobIndex !== index) {
+          return job;
+        }
+
+        const nextValues = job[key].includes(value)
+          ? job[key].filter((currentValue) => currentValue !== value)
+          : [...job[key], value];
+
+        return { ...job, [key]: nextValues };
+      }),
+    );
+  };
+
   const updateHeroImage = (value: string) => {
     setSiteImages((currentImages) => ({ ...currentImages, heroImage: value }));
   };
@@ -596,6 +668,13 @@ export function AdminContentEditor({
       value: `${activeMediaCount}/${mediaItems.length}`,
     },
     {
+      id: "portfolio",
+      icon: BriefcaseBusiness,
+      title: "Yapılan İşler",
+      text: "Tamamlanan taşıma işlerini yayınla.",
+      value: `${publishedPortfolioCount}/${portfolioJobs.length}`,
+    },
+    {
       id: "reviews",
       icon: Star,
       title: "Google Yorumları",
@@ -632,6 +711,7 @@ export function AdminContentEditor({
     { label: "Yorum", value: visibleReviewCount, icon: Star },
     { label: "Blog", value: `${publishedBlogCount}/${blogPosts.length}`, icon: FileText },
     { label: "Medya", value: activeMediaCount, icon: Film },
+    { label: "İş", value: publishedPortfolioCount, icon: BriefcaseBusiness },
   ];
 
   const handleLogout = async () => {
@@ -683,6 +763,7 @@ export function AdminContentEditor({
         <input type="hidden" name="blogPosts" value={JSON.stringify(blogPosts)} />
         <input type="hidden" name="siteImages" value={JSON.stringify(siteImages)} />
         <input type="hidden" name="mediaItems" value={JSON.stringify(mediaItems)} />
+        <input type="hidden" name="portfolioJobs" value={JSON.stringify(portfolioJobs)} />
         <input type="hidden" name="googleReviews" value={JSON.stringify(googleReviews)} />
         <input type="hidden" name="activeSection" value={activeSection} />
 
@@ -890,6 +971,18 @@ export function AdminContentEditor({
             />
           ) : null}
 
+          {activeSection === "portfolio" ? (
+            <PortfolioPanel
+              jobs={portfolioJobs}
+              mediaItems={mediaItems}
+              districts={serviceDistricts}
+              onAddJob={addPortfolioJob}
+              onUpdateJob={updatePortfolioJob}
+              onRemoveJob={removePortfolioJob}
+              onToggleJobListValue={togglePortfolioListValue}
+            />
+          ) : null}
+
           {activeSection === "reviews" ? (
             <ReviewsPanel
               reviews={googleReviews}
@@ -1062,6 +1155,38 @@ function QuoteRequestsPanel({ quoteRequests }: QuoteRequestsPanelProps) {
                       <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm font-semibold leading-7 text-slate-600">
                         {request.message}
                       </p>
+                    ) : null}
+                    <div className="mt-4 grid gap-2 rounded-lg border border-slate-200 bg-white p-4 text-xs font-bold text-slate-600 sm:grid-cols-2">
+                      {[
+                        ["Çıkış", request.fromAddress],
+                        ["Varış", request.toAddress],
+                        ["Çıkış Katı", request.fromFloor],
+                        ["Varış Katı", request.toFloor],
+                        ["Oda", request.roomCount],
+                        ["Tarih", request.moveDate],
+                        ["Asansör", request.elevatorNeed],
+                      ]
+                        .filter(([, value]) => Boolean(value))
+                        .map(([label, value]) => (
+                          <span key={label} className="rounded-lg bg-slate-50 px-3 py-2">
+                            <span className="text-emerald-700">{label}:</span> {value}
+                          </span>
+                        ))}
+                    </div>
+                    {request.photoUrls.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {request.photoUrls.map((photoUrl, photoIndex) => (
+                          <a
+                            key={photoUrl}
+                            href={photoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-9 items-center rounded-full border border-orange-200 bg-orange-50 px-3 text-xs font-black text-orange-700 transition hover:bg-orange-100"
+                          >
+                            Fotoğraf {photoIndex + 1}
+                          </a>
+                        ))}
+                      </div>
                     ) : null}
                   </div>
 
@@ -1579,6 +1704,167 @@ function MediaLibraryPanel({
         ) : (
           <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm font-semibold leading-7 text-slate-600">
             Henüz medya kaydı yok. Fotoğraf veya video ekleyerek başlayabilirsin.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+type PortfolioPanelProps = {
+  jobs: PortfolioJob[];
+  mediaItems: MediaItem[];
+  districts: string[];
+  onAddJob: () => void;
+  onUpdateJob: <Key extends keyof PortfolioJob>(
+    index: number,
+    key: Key,
+    value: PortfolioJob[Key],
+  ) => void;
+  onRemoveJob: (index: number) => void;
+  onToggleJobListValue: (
+    index: number,
+    key: "serviceSlugs" | "districtSlugs" | "mediaIds",
+    value: string,
+  ) => void;
+};
+
+function PortfolioPanel({
+  jobs,
+  mediaItems,
+  districts,
+  onAddJob,
+  onUpdateJob,
+  onRemoveJob,
+  onToggleJobListValue,
+}: PortfolioPanelProps) {
+  const activeMediaItems = mediaItems.filter((item) => item.active && item.src);
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80 sm:p-6">
+      <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <PanelHeader
+          title="Yapılan İşler"
+          text="Tamamlanan taşıma işlerini hizmet, ilçe ve medya kayıtlarıyla ilişkilendir."
+        />
+        <button
+          type="button"
+          onClick={onAddJob}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-5 text-sm font-black text-emerald-700 transition hover:bg-emerald-100"
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          Yeni İş
+        </button>
+      </div>
+
+      <div className="mb-5 rounded-lg border border-cyan-100 bg-cyan-50 p-4 text-sm font-semibold leading-7 text-cyan-900">
+        Bu modül gerçek çalışmaların çekirdeğidir. Bir iş kaydı yayınlandığında ilgili hizmet
+        ve ilçe sayfalarında otomatik görünür; fotoğraf ve videolar medya kütüphanesinden seçilir.
+      </div>
+
+      <div className="grid gap-5">
+        {jobs.length > 0 ? (
+          jobs.map((job, index) => (
+            <article key={job.id || index} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
+                    <BriefcaseBusiness className="size-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-black text-slate-950">
+                      {job.title || "Yapılan iş kaydı"}
+                    </p>
+                    <p className="mt-1 text-xs font-bold text-slate-500">
+                      {job.published ? "Yayında" : "Taslak"} · {job.completedAt || "Tarih yok"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-black text-slate-950">
+                    <input
+                      type="checkbox"
+                      checked={job.published}
+                      onChange={(event) => onUpdateJob(index, "published", event.target.checked)}
+                      className="size-4 accent-orange-500"
+                    />
+                    Yayında
+                  </label>
+                  <IconButton label={`${job.title || index + 1}. işi sil`} onClick={() => onRemoveJob(index)} />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <TextInput
+                  label="İş Başlığı"
+                  value={job.title}
+                  onChange={(value) => onUpdateJob(index, "title", value)}
+                />
+                <TextInput
+                  label="Slug"
+                  value={job.slug}
+                  onChange={(value) => onUpdateJob(index, "slug", slugify(value))}
+                />
+                <TextInput
+                  label="Tamamlanma Tarihi"
+                  value={job.completedAt}
+                  type="date"
+                  onChange={(value) => onUpdateJob(index, "completedAt", value)}
+                />
+                <TextInput
+                  label="Etiketler"
+                  value={job.tags.join(", ")}
+                  onChange={(value) =>
+                    onUpdateJob(
+                      index,
+                      "tags",
+                      value.split(",").map((tag) => tag.trim()).filter(Boolean),
+                    )
+                  }
+                />
+              </div>
+
+              <label className="mt-4 grid gap-2">
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                  Açıklama
+                </span>
+                <textarea
+                  value={job.description}
+                  onChange={(event) => onUpdateJob(index, "description", event.target.value)}
+                  rows={4}
+                  className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-7 text-slate-950 outline-none transition focus:border-emerald-400"
+                  placeholder="Örn. Esenyurt'ta 3+1 ev taşıması, paketleme ve asansörlü taşıma ile tamamlandı."
+                />
+              </label>
+
+              <div className="mt-4 grid gap-4 xl:grid-cols-3">
+                <CheckboxGroup
+                  title="Hizmetler"
+                  options={services.map((service) => ({ value: service.slug, label: service.title }))}
+                  selectedValues={job.serviceSlugs}
+                  onToggle={(value) => onToggleJobListValue(index, "serviceSlugs", value)}
+                />
+                <CheckboxGroup
+                  title="İlçeler"
+                  options={districts.map((district) => ({ value: createDistrictPageSlug(district), label: district }))}
+                  selectedValues={job.districtSlugs}
+                  onToggle={(value) => onToggleJobListValue(index, "districtSlugs", value)}
+                />
+                <CheckboxGroup
+                  title="Medya"
+                  options={activeMediaItems.map((item) => ({
+                    value: item.id,
+                    label: `${item.type === "video" ? "Video" : "Fotoğraf"} · ${item.title || item.alt || item.id}`,
+                  }))}
+                  selectedValues={job.mediaIds}
+                  onToggle={(value) => onToggleJobListValue(index, "mediaIds", value)}
+                />
+              </div>
+            </article>
+          ))
+        ) : (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm font-semibold leading-7 text-slate-600">
+            Henüz yapılan iş kaydı yok. Yeni iş ekleyip hizmet, ilçe ve medya seçerek başlayabilirsin.
           </div>
         )}
       </div>

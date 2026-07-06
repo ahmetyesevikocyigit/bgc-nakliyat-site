@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Building2, CheckCircle2, Clock, ShieldCheck, Truck } from "lucide-react";
 import { ActionLinks } from "@/components/action-links";
 import { MediaGallery } from "@/components/media-gallery";
+import { PortfolioJobsSection } from "@/components/portfolio-jobs-section";
 import { getEditableContent, type DistrictPageContent } from "@/lib/editable-content";
 import { getMediaForGallery, getMediaLibrary } from "@/lib/media-library";
 import { createDistrictSlug, createSlug } from "@/lib/slug";
@@ -76,7 +77,10 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
 
   const { page, isLegacySlug } = districtPage;
   const district = page.district;
-  const districtMedia = getMediaForGallery(await getMediaLibrary(), { districtSlug: page.slug });
+  const content = await getEditableContent();
+  const mediaLibrary = await getMediaLibrary();
+  const districtMedia = getMediaForGallery(mediaLibrary, { districtSlug: page.slug });
+  const districtJobs = content.portfolioJobs.filter((job) => job.districtSlugs.includes(page.slug));
 
   if (isLegacySlug) {
     redirect(`/bolgeler/${page.slug}`);
@@ -167,6 +171,14 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
         title={`${district} bölgesindeki gerçek çalışmalar`}
         text="Bu ilçe sayfasına atanmış fotoğraf ve videolar otomatik olarak burada listelenir."
         emptyText={`${district} için henüz aktif medya kaydı eklenmedi.`}
+      />
+
+      <PortfolioJobsSection
+        jobs={districtJobs}
+        mediaItems={mediaLibrary}
+        title={`${district} yapılan taşıma işleri`}
+        text="Admin panelinden bu ilçeye bağlanan tamamlanmış işler güven veren yerel örnekler olarak otomatik gösterilir."
+        emptyText={`${district} için yayınlanmış yapılan iş kaydı henüz yok.`}
       />
 
       <section className="bg-white py-20">
