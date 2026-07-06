@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { company, navItems } from "@/lib/site-data";
+import { avebworks, company, navItems } from "@/lib/site-data";
 
 export function Footer() {
   return (
@@ -28,6 +28,14 @@ export function Footer() {
             Evden eve nakliyat, parça eşya, ofis taşıma ve şehirlerarası taşımacılık
             süreçlerinde hızlı iletişim, doğru planlama ve güvenli operasyon.
           </p>
+          <a
+            href={avebworks.href}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-6 inline-flex text-xs font-black uppercase tracking-[0.18em] text-slate-500 transition hover:text-orange-300"
+          >
+            Yönetim: {avebworks.name}
+          </a>
         </div>
 
         <div>

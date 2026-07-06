@@ -34,7 +34,13 @@ export const navItems = [
   { label: "Bölgeler", href: "/bolgeler" },
   { label: "Blog", href: "/blog" },
   { label: "İletişim", href: "/iletisim" },
+  { label: "Yönetim", href: "/admin" },
 ];
+
+export const avebworks = {
+  name: "Avebworks",
+  href: "https://avebworks.com",
+};
 
 export const trustStats = [
   { value: "7/24", label: "Teklif ve planlama desteği" },
