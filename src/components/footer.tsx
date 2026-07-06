@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { avebworks, company, managementLink, navItems } from "@/lib/site-data";
+import { avebworks, company, navItems } from "@/lib/site-data";
 
 export function Footer() {
   return (
@@ -34,7 +34,7 @@ export function Footer() {
             rel="noreferrer"
             className="mt-6 inline-flex text-xs font-black uppercase tracking-[0.18em] text-slate-500 transition hover:text-orange-300"
           >
-            Yönetim: {avebworks.name}
+            Site: {avebworks.name}
           </a>
         </div>
 
@@ -43,7 +43,7 @@ export function Footer() {
             Sayfalar
           </h2>
           <div className="grid gap-3">
-            {[...navItems, managementLink].map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

@@ -37,8 +37,6 @@ export const navItems = [
   { label: "İletişim", href: "/iletisim" },
 ];
 
-export const managementLink = { label: "Yönetim", href: "/admin" };
-
 export const avebworks = {
   name: "Avebworks",
   href: "https://avebworks.com",
