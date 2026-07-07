@@ -2,11 +2,22 @@ import { getEditableContent } from "@/lib/editable-content";
 
 export type SiteReview = {
   author: string;
+  authorPhoto?: string;
   location: string;
   service?: string;
   rating: number;
   text: string;
+  relativeTime?: string;
+  googleMapsUri?: string;
   authorUri?: string;
+};
+
+export type GoogleReviewsData = {
+  businessName: string;
+  rating: number | null;
+  userRatingCount: number;
+  googleMapsUri: string;
+  reviews: SiteReview[];
 };
 
 type GoogleLocalizedText = {
@@ -20,6 +31,7 @@ type GooglePlaceReview = {
   originalText?: GoogleLocalizedText;
   relativePublishTimeDescription?: string;
   publishTime?: string;
+  googleMapsUri?: string;
   authorAttribution?: {
     displayName?: string;
     uri?: string;
@@ -27,20 +39,30 @@ type GooglePlaceReview = {
   };
 };
 
-type GooglePlace = {
-  id?: string;
-  name?: string;
+type GooglePlaceDetails = {
+  displayName?: GoogleLocalizedText;
+  rating?: number;
+  userRatingCount?: number;
+  googleMapsUri?: string;
   reviews?: GooglePlaceReview[];
 };
 
-type GoogleTextSearchResponse = {
-  places?: GooglePlace[];
-};
+const GOOGLE_PLACE_DETAILS_FIELD_MASK = "displayName,rating,userRatingCount,reviews,googleMapsUri";
+const GOOGLE_PLACE_DETAILS_REVALIDATE_SECONDS = 60 * 60;
 
-const googlePlaceQuery =
-  process.env.GOOGLE_PLACE_QUERY ||
-  "Bgc Nakliyat | Evden Eve Nakliyat, Mevlana, Çelebi Mehmet Cad. Marmara Park Alışveriş Merkezi No: 33A D:418, 34517 Esenyurt/İstanbul";
-const defaultGooglePlaceId = "7727899762205582080";
+export class GoogleReviewsConfigError extends Error {
+  constructor(message = "Google Places API yapılandırması eksik.") {
+    super(message);
+    this.name = "GoogleReviewsConfigError";
+  }
+}
+
+export class GoogleReviewsApiError extends Error {
+  constructor(message = "Google yorumları şu anda alınamadı.") {
+    super(message);
+    this.name = "GoogleReviewsApiError";
+  }
+}
 
 async function fallbackReviews(): Promise<SiteReview[]> {
   return (await getEditableContent()).googleReviews;
@@ -53,75 +75,64 @@ function normalizeReview(review: GooglePlaceReview): SiteReview | null {
     return null;
   }
 
+  const relativeTime = review.relativePublishTimeDescription || review.publishTime || "Google yorumu";
+
   return {
     author: review.authorAttribution?.displayName || "Google kullanıcısı",
+    authorPhoto: review.authorAttribution?.photoUri,
     authorUri: review.authorAttribution?.uri,
-    location: review.relativePublishTimeDescription || "Google yorumu",
+    location: relativeTime,
     rating: Math.round(review.rating || 5),
     text,
+    relativeTime,
+    googleMapsUri: review.googleMapsUri || review.authorAttribution?.uri,
   };
 }
 
-function normalizeReviews(reviews?: GooglePlaceReview[]) {
-  return reviews?.map(normalizeReview).filter((review): review is SiteReview => Boolean(review)) || [];
+function normalizePlace(place: GooglePlaceDetails): GoogleReviewsData {
+  return {
+    businessName: place.displayName?.text || "BGC Nakliyat",
+    rating: typeof place.rating === "number" ? place.rating : null,
+    userRatingCount: typeof place.userRatingCount === "number" ? place.userRatingCount : 0,
+    googleMapsUri: place.googleMapsUri || "",
+    reviews:
+      place.reviews
+        ?.map(normalizeReview)
+        .filter((review): review is SiteReview => Boolean(review)) || [],
+  };
 }
 
-async function getPlaceById(apiKey: string, placeId: string) {
-  const cleanPlaceId = placeId.replace(/^places\//, "");
-  const response = await fetch(`https://places.googleapis.com/v1/places/${cleanPlaceId}`, {
+export async function getGoogleReviewsData(): Promise<GoogleReviewsData> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY?.trim();
+  const placeId = process.env.GOOGLE_PLACE_ID?.trim().replace(/^places\//, "");
+
+  if (!apiKey || !placeId) {
+    throw new GoogleReviewsConfigError();
+  }
+
+  const url = new URL(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`);
+  url.searchParams.set("languageCode", "tr");
+
+  const response = await fetch(url, {
     headers: {
       "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": "id,name,reviews",
+      "X-Goog-FieldMask": GOOGLE_PLACE_DETAILS_FIELD_MASK,
     },
-    next: { revalidate: 60 * 60 },
+    next: { revalidate: GOOGLE_PLACE_DETAILS_REVALIDATE_SECONDS },
   });
 
   if (!response.ok) {
-    return null;
+    throw new GoogleReviewsApiError();
   }
 
-  return (await response.json()) as GooglePlace;
-}
-
-async function searchPlace(apiKey: string) {
-  const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": "places.id,places.name,places.reviews",
-    },
-    body: JSON.stringify({
-      textQuery: googlePlaceQuery,
-      languageCode: "tr",
-      regionCode: "TR",
-      maxResultCount: 1,
-    }),
-    next: { revalidate: 60 * 60 },
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const data = (await response.json()) as GoogleTextSearchResponse;
-  return data.places?.[0] || null;
+  return normalizePlace((await response.json()) as GooglePlaceDetails);
 }
 
 export async function getGoogleReviews(): Promise<SiteReview[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-
-  if (!apiKey) {
-    return fallbackReviews();
-  }
-
   try {
-    const googlePlaceId = process.env.GOOGLE_PLACE_ID || defaultGooglePlaceId;
-    const place = (await getPlaceById(apiKey, googlePlaceId)) || (await searchPlace(apiKey));
+    const data = await getGoogleReviewsData();
 
-    const reviews = normalizeReviews(place?.reviews);
-
-    return reviews.length > 0 ? reviews : fallbackReviews();
+    return data.reviews.length > 0 ? data.reviews : fallbackReviews();
   } catch {
     return fallbackReviews();
   }

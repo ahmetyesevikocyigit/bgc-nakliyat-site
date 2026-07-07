@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { ActionLinks } from "@/components/action-links";
 import { FaqAccordion } from "@/components/faq-accordion";
+import { GoogleReviews } from "@/components/google-reviews";
 import { HeroGoogleReviews } from "@/components/hero-google-reviews";
 import { HeroPhotoSlider } from "@/components/hero-photo-slider";
 import { ServiceCard } from "@/components/service-card";
@@ -80,6 +81,8 @@ export default async function Home() {
           <HeroGoogleReviews compact variant="mobile" />
         </div>
       </section>
+
+      <GoogleReviews />
 
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

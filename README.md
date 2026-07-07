@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BGC Nakliyat Site
+
+This is a Next.js App Router project using TypeScript and pnpm.
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies and run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Google Places Reviews
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The public Google reviews section reads from the server route `src/app/api/google-reviews/route.ts`.
+The Google API key is only read on the server and must not be exposed with a `NEXT_PUBLIC_` prefix.
 
-## Learn More
+1. In Google Cloud Console, enable **Places API (New)** for the project.
+2. Create or choose an API key and restrict it to the Places API.
+3. Find the business Place ID with Google’s Place ID Finder or from your Google Business Profile tools.
+4. Add the values to `.env.local` in development or `.env.production.local` on the VPS:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+GOOGLE_PLACES_API_KEY="your-google-places-api-key"
+GOOGLE_PLACE_ID="your-google-place-id"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The route calls the Place Details endpoint with this field mask:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+displayName,rating,userRatingCount,reviews,googleMapsUri
+```
 
-## Deploy on Vercel
+It normalizes the response for the frontend as:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```ts
+{
+  businessName: string;
+  rating: number | null;
+  userRatingCount: number;
+  googleMapsUri: string;
+  reviews: {
+    author: string;
+    authorPhoto?: string;
+    rating: number;
+    text: string;
+    relativeTime?: string;
+    googleMapsUri?: string;
+  }[];
+}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+If the env values are missing or Google returns an error, the component shows a controlled error state instead of crashing.
+
+## Checks
+
+```bash
+pnpm lint
+pnpm build
+```
+
+For the full local verification suite:
+
+```bash
+pnpm check
+```
+
+## Production Env
+
+Production keeps persistent data in SQLite. Set these values in `.env.production.local`:
+
+```bash
+ADMIN_SESSION_SECRET="change-this-to-a-long-random-secret"
+BGC_DB_PATH="/var/www/bgc-nakliyat-data/bgc.sqlite"
+GOOGLE_PLACES_API_KEY="your-google-places-api-key"
+GOOGLE_PLACE_ID="your-google-place-id"
+```
