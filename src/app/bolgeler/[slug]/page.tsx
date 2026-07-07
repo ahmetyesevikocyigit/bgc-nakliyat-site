@@ -123,23 +123,10 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
 
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
-            <aside className="rounded-lg border border-slate-200 bg-slate-50 p-5 lg:sticky lg:top-28">
-              <p className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-cyan-700">
-                Yerel Planlama
-              </p>
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">
-                {district} için hızlı keşif ve doğru taşıma planı.
-              </h2>
-              <p className="mt-4 text-sm font-semibold leading-7 text-slate-600">
-                Bu sayfanın hero alanı sabit tutulur. Alt içerik admin panelinden HTML düzeninde güncellenir.
-              </p>
-            </aside>
-            <div
-              className="editable-region-html rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
-              dangerouslySetInnerHTML={{ __html: page.html }}
-            />
-          </div>
+          <div
+            className="editable-region-html rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
+            dangerouslySetInnerHTML={{ __html: page.html }}
+          />
         </div>
       </section>
 
