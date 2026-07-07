@@ -74,6 +74,15 @@ a {
     color: #334155;
   }
 
+  .editable-region-html h1 {
+    margin-top: 0;
+    color: #020617;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.08;
+  }
+
   .editable-region-html h2 {
     margin-top: 0;
     color: #020617;
