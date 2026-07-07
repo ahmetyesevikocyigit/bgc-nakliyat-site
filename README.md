@@ -15,7 +15,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 ## Google Places Reviews
 
-The public Google reviews section reads from the server route `src/app/api/google-reviews/route.ts`.
+The hero and header Google review widgets read from the server route `src/app/api/google-reviews/route.ts`.
 The Google API key is only read on the server and must not be exposed with a `NEXT_PUBLIC_` prefix.
 
 1. In Google Cloud Console, enable **Places API (New)** for the project.
@@ -53,7 +53,7 @@ It normalizes the response for the frontend as:
 }
 ```
 
-If the env values are missing or Google returns an error, the component shows a controlled error state instead of crashing.
+If the env values are missing or Google returns an error, the hero/header widgets keep using the editable fallback reviews instead of crashing.
 
 ## Checks
 
