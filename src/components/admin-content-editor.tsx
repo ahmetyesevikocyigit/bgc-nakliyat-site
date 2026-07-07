@@ -130,11 +130,7 @@ function syncDistrictPages(districts: string[], pages: DistrictPageContent[]) {
 }
 
 function sanitizePreviewHtml(html: string) {
-  return html
-    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
-    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select)[^>]*\/?\s*>/gi, "")
-    .replace(/\son[a-z]+\s*=\s*(".*?"|'.*?'|[^\s>]+)/gi, "")
-    .replace(/\s(href|src)\s*=\s*("javascript:[^"]*"|'javascript:[^']*'|javascript:[^\s>]+)/gi, ' $1="#"');
+  return html;
 }
 
 function today() {
@@ -2379,7 +2375,7 @@ function DistrictPagesPanel({
                   HTML Editörü
                 </p>
                 <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-                  Güvenli etiketler: h2, h3, p, ul, ol, li, strong, em, a, blockquote, br, hr.
+                  HTML kodu kaydedildiği gibi yayınlanır; iframe ve embed kodları korunur.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">

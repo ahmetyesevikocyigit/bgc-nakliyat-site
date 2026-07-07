@@ -71,61 +71,8 @@ export type EditableContent = {
   portfolioJobs: PortfolioJob[];
 };
 
-const allowedHtmlTags = new Set([
-  "a",
-  "b",
-  "blockquote",
-  "br",
-  "em",
-  "h2",
-  "h3",
-  "hr",
-  "i",
-  "li",
-  "ol",
-  "p",
-  "strong",
-  "ul",
-]);
-
 function stripDisallowedHtml(html: string) {
-  return html
-    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
-    .replace(/<\s*(script|style|iframe|object|embed|form|input|button|textarea|select)[^>]*\/?\s*>/gi, "")
-    .replace(/<\/?([a-z0-9-]+)([^>]*)>/gi, (match, tagName: string, attributes: string) => {
-      const tag = tagName.toLowerCase();
-
-      if (!allowedHtmlTags.has(tag)) {
-        return "";
-      }
-
-      if (match.startsWith("</")) {
-        return `</${tag}>`;
-      }
-
-      if (tag === "br" || tag === "hr") {
-        return `<${tag}>`;
-      }
-
-      if (tag === "a") {
-        const hrefMatch = String(attributes).match(/\shref\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i);
-        const href = (hrefMatch?.[2] || hrefMatch?.[3] || hrefMatch?.[4] || "").trim();
-        const safeHref =
-          href.startsWith("/") ||
-          href.startsWith("#") ||
-          href.startsWith("http://") ||
-          href.startsWith("https://") ||
-          href.startsWith("tel:") ||
-          href.startsWith("mailto:")
-            ? href.replace(/"/g, "&quot;")
-            : "#";
-
-        return `<a href="${safeHref}">`;
-      }
-
-      return `<${tag}>`;
-    })
-    .trim();
+  return html.trim();
 }
 
 export function createDefaultDistrictPage(district: string): DistrictPageContent {
