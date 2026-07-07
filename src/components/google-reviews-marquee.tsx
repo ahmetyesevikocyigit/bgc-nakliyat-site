@@ -46,7 +46,7 @@ export function GoogleReviewsMarquee() {
                   />
                 </div>
               </div>
-              <div className="mb-4 flex gap-1 text-amber-400" aria-label={`${review.rating} yıldız`}>
+              <div className="mb-4 flex gap-1 text-amber-400" role="img" aria-label={`${review.rating} yıldız`}>
                 {Array.from({ length: review.rating }).map((_, starIndex) => (
                   <Star key={starIndex} className="size-4 fill-current" aria-hidden="true" />
                 ))}

@@ -83,7 +83,7 @@ export default async function Home() {
 
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="mb-10 text-center text-3xl font-black tracking-tight text-orange-500 sm:text-4xl">
+          <h2 className="mb-10 text-center text-3xl font-black tracking-tight text-orange-700 sm:text-4xl">
             Hizmetler
           </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

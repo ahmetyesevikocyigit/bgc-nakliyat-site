@@ -55,7 +55,7 @@ export const services = [
     title: "Evden Eve Nakliyat",
     slug: "evden-eve-nakliyat",
     icon: Truck,
-    image: "/images/evden-eve-nakliyat.jpg",
+    image: "/images/evden-eve-nakliyat.webp",
     summary:
       "Eşya keşfinden yeni adrese yerleşime kadar taşınma sürecini planlı, güvenli ve hızlı şekilde yönetir.",
     details:
@@ -71,7 +71,7 @@ export const services = [
     title: "Parça Eşya Taşıma",
     slug: "parca-esya-tasima",
     icon: Boxes,
-    image: "/images/parca-esya-tasima-guncel.jpeg",
+    image: "/images/parca-esya-tasima-guncel.webp",
     summary:
       "Tekli eşya, birkaç koli ya da küçük hacimli yükler için ekonomik ve pratik taşıma çözümü sunar.",
     details:
@@ -87,7 +87,7 @@ export const services = [
     title: "Ofis Eşyası Taşıma",
     slug: "ofis-esyasi-tasima",
     icon: Building2,
-    image: "/images/ofis-tasima.png",
+    image: "/images/ofis-tasima.webp",
     summary:
       "Masa, dolap, teknoloji ekipmanı ve arşivlerin düzenli paketlenip yeni ofise taşınmasını sağlar.",
     details:
@@ -103,7 +103,7 @@ export const services = [
     title: "Asansörlü Taşıma",
     slug: "asansorlu-tasima",
     icon: Warehouse,
-    image: "/images/asansorlu-tasima.jpg",
+    image: "/images/asansorlu-tasima.webp",
     summary:
       "Yüksek katlı binalarda dış cephe asansörüyle daha hızlı ve daha güvenli taşıma yapılmasına yardımcı olur.",
     details:
@@ -119,7 +119,7 @@ export const services = [
     title: "Şehirlerarası Nakliyat",
     slug: "sehirlerarasi-nakliyat",
     icon: MapPin,
-    image: "/images/sehirlerarasi-nakliyat.png",
+    image: "/images/sehirlerarasi-nakliyat.webp",
     summary:
       "İstanbul çıkışlı şehirlerarası taşımalar için rota, paketleme ve teslimat sürecini uçtan uca planlar.",
     details:
@@ -135,7 +135,7 @@ export const services = [
     title: "Paketleme ve Sigortalı Taşıma",
     slug: "paketleme-sigortali-tasima",
     icon: PackageCheck,
-    image: "/images/paketleme-sigortali-tasima.jpg",
+    image: "/images/paketleme-sigortali-tasima.webp",
     summary:
       "Kırılacak, hassas ve değerli eşyalar için doğru ambalajlama ve sigortalı taşıma güveni sağlar.",
     details:

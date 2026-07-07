@@ -1341,7 +1341,7 @@ type ImagesPanelProps = {
 };
 
 function getDefaultServiceImage(service: (typeof services)[number]) {
-  return "image" in service && service.image ? service.image : "/images/bgc-nakliyat-hero.png";
+  return "image" in service && service.image ? service.image : "/images/bgc-nakliyat-hero.webp";
 }
 
 function ImagesPanel({
@@ -1367,7 +1367,7 @@ function ImagesPanel({
           fileInputName="heroImageFile"
           onImagePathChange={onUpdateHeroImage}
           onFilePreviewChange={(file) => onUpdateImagePreview("hero", file)}
-          onReset={() => onUpdateHeroImage("/images/sehirlerarasi-nakliyat.png")}
+          onReset={() => onUpdateHeroImage("/images/sehirlerarasi-nakliyat.webp")}
         />
 
         <div className="grid gap-4 xl:grid-cols-2">

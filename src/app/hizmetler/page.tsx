@@ -41,7 +41,7 @@ function ServiceShowcaseCard({
         </div>
         <div className="relative aspect-[16/9] overflow-hidden border-4 border-cyan-800 bg-slate-950">
           <Image
-            src={serviceImage || "/images/bgc-nakliyat-hero.png"}
+            src={serviceImage || "/images/bgc-nakliyat-hero.webp"}
             alt=""
             fill
             unoptimized={Boolean(serviceImage?.startsWith("/uploads/"))}

@@ -97,14 +97,14 @@
     }
   ],
   "siteImages": {
-    "heroImage": "/images/sehirlerarasi-nakliyat.png",
+    "heroImage": "/images/sehirlerarasi-nakliyat.webp",
     "serviceImages": {
-      "evden-eve-nakliyat": "/images/evden-eve-nakliyat.jpg",
-      "parca-esya-tasima": "/images/parca-esya-tasima-guncel.jpeg",
-      "ofis-tasima": "/images/ofis-tasima.png",
-      "asansorlu-tasima": "/images/asansorlu-tasima.jpg",
-      "sehirlerarasi-nakliyat": "/images/sehirlerarasi-nakliyat.png",
-      "paketleme-sigortali-tasima": "/images/paketleme-sigortali-tasima.jpg"
+      "evden-eve-nakliyat": "/images/evden-eve-nakliyat.webp",
+      "parca-esya-tasima": "/images/parca-esya-tasima-guncel.webp",
+      "ofis-tasima": "/images/ofis-tasima.webp",
+      "asansorlu-tasima": "/images/asansorlu-tasima.webp",
+      "sehirlerarasi-nakliyat": "/images/sehirlerarasi-nakliyat.webp",
+      "paketleme-sigortali-tasima": "/images/paketleme-sigortali-tasima.webp"
     }
   },
   "googleReviews": [

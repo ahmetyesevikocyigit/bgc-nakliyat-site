@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://www.bgcnakliyat.com",
     siteName: "BGC Nakliyat",
-    images: [{ url: "/images/sehirlerarasi-nakliyat.png", width: 853, height: 1844 }],
+    images: [{ url: "/images/sehirlerarasi-nakliyat.webp", width: 853, height: 1844 }],
   },
   icons: {
     icon: "/images/bgc-logo.png",

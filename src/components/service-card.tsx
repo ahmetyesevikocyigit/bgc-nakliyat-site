@@ -14,12 +14,12 @@ export function ServiceCard({ title, summary, image, icon: Icon }: ServiceCardPr
     <article className="group relative flex h-full flex-col rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/80">
       <div className="relative mx-4 mt-4 h-48 overflow-hidden rounded-xl bg-slate-950">
         <Image
-          src={image || "/images/bgc-nakliyat-hero.png"}
+          src={image || "/images/bgc-nakliyat-hero.webp"}
           alt=""
           fill
           unoptimized={Boolean(image?.startsWith("/uploads/"))}
           className="object-cover transition duration-500 group-hover:scale-105"
-          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+          sizes="(min-width: 1280px) 360px, (min-width: 768px) 45vw, 92vw"
           aria-hidden="true"
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.08),rgba(2,6,23,0.68))]" />
@@ -39,7 +39,7 @@ export function ServiceCard({ title, summary, image, icon: Icon }: ServiceCardPr
         </div>
       </div>
       <div className="relative flex flex-1 flex-col p-6 pt-5">
-        <div className="mb-4 inline-flex max-w-full whitespace-normal rounded-md border border-slate-950 bg-orange-50 px-3 py-1 text-xs font-black uppercase leading-5 tracking-[0.12em] text-orange-600">
+        <div className="mb-4 inline-flex max-w-full whitespace-normal rounded-md border border-orange-800 bg-orange-50 px-3 py-1 text-xs font-black uppercase leading-5 tracking-[0.12em] text-orange-800">
           {title}
         </div>
         <p className="text-base font-semibold leading-7 text-slate-800">{summary}</p>

@@ -88,7 +88,7 @@ export function HeroGoogleReviews({ compact = false, variant = "dark" }: HeroGoo
               <h3 className="text-sm font-black text-slate-950">{activeReview.author}</h3>
               <p className="text-xs font-bold text-slate-500">{activeReview.location}</p>
             </div>
-            <div className="flex gap-0.5 text-amber-400" aria-label={`${activeReview.rating} yıldız`}>
+            <div className="flex gap-0.5 text-amber-400" role="img" aria-label={`${activeReview.rating} yıldız`}>
               {Array.from({ length: activeReview.rating }).map((_, starIndex) => (
                 <Star key={starIndex} className="size-3.5 fill-current" aria-hidden="true" />
               ))}
@@ -98,18 +98,23 @@ export function HeroGoogleReviews({ compact = false, variant = "dark" }: HeroGoo
         </article>
 
         <div className="mt-3 flex items-center justify-between gap-3">
-          <div className="flex gap-2" aria-label="Yorum seçimi">
+          <div className="-m-3 flex max-w-[calc(100vw-9rem)] overflow-x-auto" aria-label="Yorum seçimi">
             {reviews.map((review, index) => (
               <button
                 key={review.author}
                 type="button"
                 onClick={() => setActiveIndex(index)}
-                className={`size-2 rounded-full transition ${
-                  activeIndex === index ? "bg-orange-500" : "bg-slate-300 hover:bg-slate-400"
-                }`}
+                className="grid min-h-11 min-w-11 place-items-center rounded-full transition focus:outline-none focus:ring-4 focus:ring-orange-100"
                 aria-label={`${index + 1}. yoruma geç`}
                 aria-pressed={activeIndex === index}
-              />
+              >
+                <span
+                  className={`size-2 rounded-full transition ${
+                    activeIndex === index ? "bg-orange-500" : "bg-slate-300"
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
             ))}
           </div>
           <div className="flex gap-2">
@@ -176,7 +181,7 @@ export function HeroGoogleReviews({ compact = false, variant = "dark" }: HeroGoo
             <h3 className={compact ? "text-sm font-black" : "font-black"}>{activeReview.author}</h3>
             <p className="text-xs font-bold text-white/58">{activeReview.location}</p>
           </div>
-          <div className="flex gap-0.5 text-amber-300" aria-label={`${activeReview.rating} yıldız`}>
+          <div className="flex gap-0.5 text-amber-300" role="img" aria-label={`${activeReview.rating} yıldız`}>
             {Array.from({ length: activeReview.rating }).map((_, starIndex) => (
               <Star key={starIndex} className={`${compact ? "size-3" : "size-3.5"} fill-current`} aria-hidden="true" />
             ))}
@@ -194,18 +199,23 @@ export function HeroGoogleReviews({ compact = false, variant = "dark" }: HeroGoo
       </article>
 
       <div className={`flex items-center gap-3 ${compact ? "mt-3 justify-start" : "mt-4 justify-between sm:gap-4"}`}>
-        <div className="flex gap-2" aria-label="Yorum seçimi">
+        <div className="-m-3 flex max-w-full overflow-x-auto" aria-label="Yorum seçimi">
           {reviews.map((review, index) => (
             <button
               key={review.author}
               type="button"
               onClick={() => setActiveIndex(index)}
-              className={`${compact ? "size-2" : "size-2.5"} rounded-full transition ${
-                activeIndex === index ? "bg-orange-300" : "bg-white/28 hover:bg-white/55"
-              }`}
+              className="grid min-h-11 min-w-11 place-items-center rounded-full transition focus:outline-none focus:ring-4 focus:ring-white/20"
               aria-label={`${index + 1}. yoruma geç`}
               aria-pressed={activeIndex === index}
-            />
+            >
+              <span
+                className={`${compact ? "size-2" : "size-2.5"} rounded-full transition ${
+                  activeIndex === index ? "bg-orange-300" : "bg-white/45"
+                }`}
+                aria-hidden="true"
+              />
+            </button>
           ))}
         </div>
         <div className={`flex gap-1.5 sm:gap-2 ${compact ? "order-first" : ""}`}>

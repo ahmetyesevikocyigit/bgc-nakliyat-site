@@ -147,15 +147,25 @@ export function createDefaultDistrictPage(district: string): DistrictPageContent
 }
 
 const defaultSiteImages: SiteImageSettings = {
-  heroImage: "/images/sehirlerarasi-nakliyat.png",
+  heroImage: "/images/sehirlerarasi-nakliyat.webp",
   serviceImages: {
-    "evden-eve-nakliyat": "/images/evden-eve-nakliyat.jpg",
-    "parca-esya-tasima": "/images/parca-esya-tasima-guncel.jpeg",
-    "ofis-tasima": "/images/ofis-tasima.png",
-    "asansorlu-tasima": "/images/asansorlu-tasima.jpg",
-    "sehirlerarasi-nakliyat": "/images/sehirlerarasi-nakliyat.png",
-    "paketleme-sigortali-tasima": "/images/paketleme-sigortali-tasima.jpg",
+    "evden-eve-nakliyat": "/images/evden-eve-nakliyat.webp",
+    "parca-esya-tasima": "/images/parca-esya-tasima-guncel.webp",
+    "ofis-tasima": "/images/ofis-tasima.webp",
+    "asansorlu-tasima": "/images/asansorlu-tasima.webp",
+    "sehirlerarasi-nakliyat": "/images/sehirlerarasi-nakliyat.webp",
+    "paketleme-sigortali-tasima": "/images/paketleme-sigortali-tasima.webp",
   },
+};
+
+const optimizedDefaultImagePaths: Record<string, string> = {
+  "/images/sehirlerarasi-nakliyat.png": "/images/sehirlerarasi-nakliyat.webp",
+  "/images/evden-eve-nakliyat.jpg": "/images/evden-eve-nakliyat.webp",
+  "/images/parca-esya-tasima-guncel.jpeg": "/images/parca-esya-tasima-guncel.webp",
+  "/images/ofis-tasima.png": "/images/ofis-tasima.webp",
+  "/images/asansorlu-tasima.jpg": "/images/asansorlu-tasima.webp",
+  "/images/paketleme-sigortali-tasima.jpg": "/images/paketleme-sigortali-tasima.webp",
+  "/images/bgc-nakliyat-hero.png": "/images/bgc-nakliyat-hero.webp",
 };
 
 function normalizeImagePath(value: unknown, fallback: string) {
@@ -175,7 +185,7 @@ function normalizeImagePath(value: unknown, fallback: string) {
     trimmedValue.startsWith("https://") ||
     trimmedValue.startsWith("data:image/")
   ) {
-    return trimmedValue;
+    return optimizedDefaultImagePaths[trimmedValue] || trimmedValue;
   }
 
   return fallback;
