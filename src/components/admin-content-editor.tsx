@@ -1414,22 +1414,35 @@ function ImageEditorCard({
   onReset,
 }: ImageEditorCardProps) {
   const visibleImagePath = previewPath || imagePath;
+  const [uploadError, setUploadError] = useState("");
+  const [previewError, setPreviewError] = useState("");
 
   return (
     <article className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-[220px_1fr]">
       <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-        {visibleImagePath ? (
+        {visibleImagePath && !previewError ? (
           <img
             src={visibleImagePath}
             alt=""
             className="h-full w-full object-cover"
+            onLoad={() => setPreviewError("")}
+            onError={() =>
+              setPreviewError(
+                "Görsel önizlemesi yüklenemedi. Dosya yolu silinmiş, taşınmış veya format desteklenmiyor olabilir.",
+              )
+            }
           />
         ) : (
-          <div className="grid h-full place-items-center text-sm font-black text-slate-500">
-            Görsel yok
+          <div className="grid h-full place-items-center px-4 text-center text-sm font-black text-slate-500">
+            {previewError || "Görsel yok"}
           </div>
         )}
       </div>
+      {uploadError || previewError ? (
+        <p className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-bold leading-5 text-orange-800 md:col-start-1">
+          {uploadError || previewError}
+        </p>
+      ) : null}
 
       <div className="min-w-0">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
@@ -1467,12 +1480,27 @@ function ImageEditorCard({
           <input
             name={fileInputName}
             type="file"
-            accept="image/*"
-            onChange={(event) => onFilePreviewChange(event.target.files?.[0])}
+            accept="image/jpeg,image/png,image/webp,image/avif"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              const error = getMediaFileError(file, "image");
+
+              if (error) {
+                setUploadError(error);
+                setPreviewError("");
+                onFilePreviewChange(undefined);
+                event.currentTarget.value = "";
+                return;
+              }
+
+              setUploadError("");
+              setPreviewError("");
+              onFilePreviewChange(file);
+            }}
             className="block w-full rounded-lg border border-dashed border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-orange-500 file:px-4 file:py-2 file:text-sm file:font-black file:text-white hover:file:bg-orange-600"
           />
           <span className="text-xs font-semibold leading-5 text-slate-500">
-            Dosya seçip kaydedersen site otomatik yeni yüklenen görseli kullanır.
+            JPG, PNG, WebP veya AVIF yükle. En fazla 12 MB dosya seçebilirsin.
           </span>
         </label>
       </div>

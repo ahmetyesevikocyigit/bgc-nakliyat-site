@@ -106,6 +106,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                 alt={`${service.title} hizmet görseli`}
                 fill
                 priority
+                unoptimized={service.image.startsWith("/uploads/")}
                 sizes="(min-width: 1024px) 520px, 92vw"
                 className="object-cover"
               />

@@ -17,6 +17,7 @@ export function ServiceCard({ title, summary, image, icon: Icon }: ServiceCardPr
           src={image || "/images/bgc-nakliyat-hero.png"}
           alt=""
           fill
+          unoptimized={Boolean(image?.startsWith("/uploads/"))}
           className="object-cover transition duration-500 group-hover:scale-105"
           sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
           aria-hidden="true"

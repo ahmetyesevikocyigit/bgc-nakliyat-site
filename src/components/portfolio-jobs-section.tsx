@@ -91,6 +91,7 @@ export function PortfolioJobsSection({
                         src={coverSrc}
                         alt={coverMedia?.alt || job.title}
                         fill
+                        unoptimized={coverSrc.startsWith("/uploads/")}
                         sizes="(min-width: 1280px) 380px, (min-width: 768px) 45vw, 92vw"
                         className="object-cover"
                       />

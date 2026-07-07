@@ -63,6 +63,7 @@ export default async function Home() {
               alt="BGC Nakliyat şehirlerarası nakliye aracı"
               fill
               priority
+              unoptimized={siteImages.heroImage.startsWith("/uploads/")}
               className="hidden object-cover object-[58%_center] lg:block"
               sizes="(min-width: 1024px) 54vw, 100vw"
             />

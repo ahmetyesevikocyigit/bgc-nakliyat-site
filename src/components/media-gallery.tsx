@@ -36,6 +36,7 @@ function MediaVisual({
             alt={item.alt || item.title}
             title={item.title}
             fill
+            unoptimized={item.posterSrc.startsWith("/uploads/")}
             sizes="(min-width: 1280px) 360px, (min-width: 768px) 45vw, 92vw"
             className="object-cover transition duration-500 group-hover:scale-105"
           />
@@ -80,6 +81,7 @@ function MediaVisual({
       title={item.title}
       fill
       priority={priority}
+      unoptimized={item.src.startsWith("/uploads/")}
       sizes="(min-width: 1280px) 360px, (min-width: 768px) 45vw, 92vw"
       className="object-cover transition duration-500 group-hover:scale-105"
     />

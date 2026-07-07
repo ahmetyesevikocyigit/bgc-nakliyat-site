@@ -44,6 +44,7 @@ function ServiceShowcaseCard({
             src={serviceImage || "/images/bgc-nakliyat-hero.png"}
             alt=""
             fill
+            unoptimized={Boolean(serviceImage?.startsWith("/uploads/"))}
             className="object-cover opacity-70 transition duration-500 group-hover:scale-105"
             sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 82vw"
             aria-hidden="true"
