@@ -1,32 +1,17 @@
 import { revalidatePath } from "next/cache";
 import { mkdir, writeFile } from "node:fs/promises";
-import { extname, join } from "node:path";
+import { join } from "node:path";
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 import { saveQuoteRequest } from "@/lib/quote-requests";
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
 import { createSlug } from "@/lib/slug";
+import { maxQuoteImageUploadSize, readValidatedImageUpload } from "@/lib/upload-validation";
 
 export const dynamic = "force-dynamic";
 
 function cleanText(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value : "";
-}
-
-function getUploadExtension(file: File) {
-  const extension = extname(file.name).toLowerCase();
-
-  if (extension) {
-    return extension;
-  }
-
-  if (file.type === "image/png") {
-    return ".png";
-  }
-
-  if (file.type === "image/webp") {
-    return ".webp";
-  }
-
-  return ".jpg";
 }
 
 async function saveQuotePhotos(files: FormDataEntryValue[]) {
@@ -38,19 +23,25 @@ async function saveQuotePhotos(files: FormDataEntryValue[]) {
   const absoluteDirectory = join(process.cwd(), "public", "uploads", "quote-requests", year, month);
 
   for (const fileValue of files.slice(0, 8)) {
-    if (!(fileValue instanceof File) || fileValue.size === 0 || !fileValue.type.startsWith("image/")) {
+    if (!(fileValue instanceof File) || fileValue.size === 0) {
       continue;
     }
 
-    if (fileValue.size > 8_000_000) {
-      continue;
+    const imageUpload = await readValidatedImageUpload(fileValue, maxQuoteImageUploadSize);
+
+    if (!imageUpload.ok) {
+      throw new Error(imageUpload.error);
     }
 
     await mkdir(absoluteDirectory, { recursive: true });
-    const bytes = Buffer.from(await fileValue.arrayBuffer());
     const safeName = createSlug(fileValue.name.replace(/\.[^.]+$/, "")) || "tasima-fotografi";
-    const fileName = `${safeName}-${Date.now()}-${photoUrls.length + 1}${getUploadExtension(fileValue)}`;
-    await writeFile(join(absoluteDirectory, fileName), bytes);
+    const fileName = `${safeName}-${Date.now()}-${photoUrls.length + 1}.webp`;
+    const webpBytes = await sharp(imageUpload.bytes)
+      .rotate()
+      .resize({ width: 1600, withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+    await writeFile(join(absoluteDirectory, fileName), webpBytes);
     photoUrls.push(`${relativeDirectory}/${fileName}`);
   }
 
@@ -59,6 +50,21 @@ async function saveQuotePhotos(files: FormDataEntryValue[]) {
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIpFromHeaders(request.headers);
+    const rateLimit = checkRateLimit({
+      key: `quote:${clientIp}`,
+      limit: 12,
+      windowMs: 10 * 60 * 1000,
+      blockMs: 20 * 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { ok: false, message: "Çok fazla teklif talebi gönderildi. Lütfen biraz sonra tekrar deneyin." },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } },
+      );
+    }
+
     const contentType = request.headers.get("content-type") || "";
     const body =
       contentType.includes("multipart/form-data")
@@ -99,9 +105,9 @@ export async function POST(request: Request) {
     revalidatePath("/admin");
 
     return NextResponse.json({ ok: true, quoteRequest });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { ok: false, message: "Teklif talebi kaydedilemedi." },
+      { ok: false, message: error instanceof Error ? error.message : "Teklif talebi kaydedilemedi." },
       { status: 400 },
     );
   }

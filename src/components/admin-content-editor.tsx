@@ -26,7 +26,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useState, type KeyboardEvent } from "react";
-import { saveAdminContentAction } from "@/app/admin/actions";
 import type {
   BlogMediaBlock,
   BlogPost,
@@ -37,9 +36,15 @@ import type {
   PortfolioJob,
   SiteImageSettings,
 } from "@/lib/editable-content";
-import { mediaCategories, type MediaItem, type MediaType } from "@/lib/media-library";
+import { mediaCategories, type MediaItem, type MediaType } from "@/lib/media-shared";
 import type { QuoteRequest } from "@/lib/quote-requests";
 import { services } from "@/lib/site-data";
+import {
+  allowedImageTypes,
+  allowedVideoTypes,
+  maxAdminImageUploadSize,
+  maxVideoUploadSize,
+} from "@/lib/upload-rules";
 
 type AdminSection =
   | "overview"
@@ -58,6 +63,7 @@ type AdminContentEditorProps = {
   content: EditableContent;
   mediaItems: MediaItem[];
   quoteRequests: QuoteRequest[];
+  saveAction: (formData: FormData) => void | Promise<void>;
   initialSection?: string;
   saved?: boolean;
   hasContentError?: boolean;
@@ -70,11 +76,6 @@ type ContentBlock = {
   type: ContentBlockType;
   value: string;
 };
-
-const maxImageUploadSize = 12_000_000;
-const maxVideoUploadSize = 90_000_000;
-const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
-const allowedVideoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 
 function slugify(value: string) {
   return value
@@ -233,7 +234,7 @@ function getMediaFileError(file: File | undefined, type: MediaType) {
       return "Bu görsel formatı desteklenmiyor. JPG, PNG, WebP veya AVIF yükleyin.";
     }
 
-    if (file.size > maxImageUploadSize) {
+    if (file.size > maxAdminImageUploadSize) {
       return "Görsel çok büyük. En fazla 12 MB dosya yükleyin.";
     }
 
@@ -263,6 +264,7 @@ export function AdminContentEditor({
   content,
   mediaItems: initialMediaItems,
   quoteRequests,
+  saveAction,
   initialSection,
   saved = false,
   hasContentError = false,
@@ -782,7 +784,7 @@ export function AdminContentEditor({
   return (
     <div className="min-h-screen bg-[#eef1f0] px-3 py-3 text-slate-950 sm:px-5 lg:px-7">
       <form
-        action={saveAdminContentAction}
+        action={saveAction}
         encType="multipart/form-data"
         onKeyDown={preventAccidentalEnterSubmit}
         onSubmit={() => {

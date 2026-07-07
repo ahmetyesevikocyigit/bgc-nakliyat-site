@@ -83,10 +83,14 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   return {
     title: post.seoTitle || post.title,
     description: post.seoDescription || post.excerpt,
+    alternates: {
+      canonical: `/blog/${post.slug}`,
+    },
     openGraph: {
       title: post.seoTitle || post.title,
       description: post.seoDescription || post.excerpt,
       type: "article",
+      url: `/blog/${post.slug}`,
     },
   };
 }

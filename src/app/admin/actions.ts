@@ -2,10 +2,11 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
-import { extname, join } from "node:path";
+import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   clearAdminSession,
@@ -33,7 +34,14 @@ import {
   type MediaItem,
 } from "@/lib/media-library";
 import { createDistrictSlug, createSlug } from "@/lib/slug";
+import { checkRateLimit, clearRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
 import { services } from "@/lib/site-data";
+import {
+  getVideoUploadExtension,
+  isValidVideoUpload,
+  maxAdminImageUploadSize,
+  readValidatedImageUpload,
+} from "@/lib/upload-validation";
 
 function parseDistricts(value: FormDataEntryValue | null) {
   if (typeof value !== "string") {
@@ -316,11 +324,6 @@ const adminSectionIds = new Set([
   "settings",
 ]);
 
-const maxImageUploadSize = 12_000_000;
-const maxVideoUploadSize = 90_000_000;
-const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
-const allowedVideoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
-
 function getAdminRedirectPath(formData: FormData, searchParams = "") {
   const activeSection = formData.get("activeSection");
   const section =
@@ -329,28 +332,6 @@ function getAdminRedirectPath(formData: FormData, searchParams = "") {
       : "overview";
 
   return `/admin${searchParams}${searchParams ? "&" : "?"}section=${encodeURIComponent(section)}`;
-}
-
-function getUploadExtension(file: File) {
-  const extension = extname(file.name).toLowerCase();
-
-  if (extension) {
-    return extension;
-  }
-
-  if (file.type === "image/png") {
-    return ".png";
-  }
-
-  if (file.type === "image/webp") {
-    return ".webp";
-  }
-
-  if (file.type === "video/mp4") {
-    return ".mp4";
-  }
-
-  return ".jpg";
 }
 
 function getSafeFileBase(value: string, fallback: string) {
@@ -377,15 +358,6 @@ async function saveMediaUpload(
     return null;
   }
 
-  if (type === "image" && (!allowedImageTypes.has(fileValue.type) || fileValue.size > maxImageUploadSize)) {
-    return null;
-  }
-
-  if (type === "video" && (!allowedVideoTypes.has(fileValue.type) || fileValue.size > maxVideoUploadSize)) {
-    return null;
-  }
-
-  const bytes = Buffer.from(await fileValue.arrayBuffer());
   const { absoluteDirectory, relativeDirectory } = getMediaUploadDirectory();
   await mkdir(absoluteDirectory, { recursive: true });
 
@@ -393,7 +365,12 @@ async function saveMediaUpload(
   const timestamp = Date.now();
 
   if (type === "video") {
-    const extension = extname(fileValue.name).toLowerCase() || (fileValue.type === "video/webm" ? ".webm" : ".mp4");
+    if (!isValidVideoUpload(fileValue)) {
+      return null;
+    }
+
+    const bytes = Buffer.from(await fileValue.arrayBuffer());
+    const extension = getVideoUploadExtension(fileValue);
     const videoName = `${safeBase}-${timestamp}${extension}`;
     await writeFile(join(absoluteDirectory, videoName), bytes);
 
@@ -403,7 +380,14 @@ async function saveMediaUpload(
     };
   }
 
-  const originalExtension = getUploadExtension(fileValue);
+  const imageUpload = await readValidatedImageUpload(fileValue, maxAdminImageUploadSize);
+
+  if (!imageUpload.ok) {
+    return null;
+  }
+
+  const bytes = imageUpload.bytes;
+  const originalExtension = imageUpload.extension;
   const originalName = `${safeBase}-${timestamp}${originalExtension}`;
   const webpName = `${safeBase}-${timestamp}.webp`;
   const originalPath = join(absoluteDirectory, originalName);
@@ -435,13 +419,15 @@ async function saveUploadedImage(fileValue: FormDataEntryValue | null, key: stri
     return null;
   }
 
-  if (!allowedImageTypes.has(fileValue.type) || fileValue.size > maxImageUploadSize) {
+  const imageUpload = await readValidatedImageUpload(fileValue, maxAdminImageUploadSize);
+
+  if (!imageUpload.ok) {
     return null;
   }
 
   const safeKey = key.replace(/[^a-z0-9-]+/gi, "-").toLowerCase();
-  const fileName = `${safeKey}-${Date.now()}${getUploadExtension(fileValue)}`;
-  const bytes = Buffer.from(await fileValue.arrayBuffer());
+  const fileName = `${safeKey}-${Date.now()}${imageUpload.extension}`;
+  const bytes = imageUpload.bytes;
 
   if (process.env.VERCEL) {
     if (bytes.length > 900_000) {
@@ -461,9 +447,23 @@ async function saveUploadedImage(fileValue: FormDataEntryValue | null, key: stri
 }
 
 export async function loginAction(formData: FormData) {
+  const requestHeaders = await headers();
+  const clientIp = getClientIpFromHeaders(requestHeaders);
+  const rateLimit = checkRateLimit({
+    key: `admin-login:${clientIp}`,
+    limit: 8,
+    windowMs: 15 * 60 * 1000,
+    blockMs: 15 * 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    redirect("/admin?error=rate-limit");
+  }
+
   const password = formData.get("password");
 
   if (typeof password === "string" && (await isValidAdminPasswordAsync(password))) {
+    clearRateLimit(`admin-login:${clientIp}`);
     await createAdminSession();
     redirect("/admin");
   }

@@ -48,10 +48,14 @@ export async function generateMetadata({ params }: ServicePageProps): Promise<Me
   return {
     title: `${service.title} | ${company.name}`,
     description: `${service.title} hizmeti için ${service.summary}`,
+    alternates: {
+      canonical: `/hizmetler/${service.slug}`,
+    },
     openGraph: {
       title: `${service.title} | ${company.name}`,
       description: service.summary,
       type: "website",
+      url: `/hizmetler/${service.slug}`,
     },
   };
 }

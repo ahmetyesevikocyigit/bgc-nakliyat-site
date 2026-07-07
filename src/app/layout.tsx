@@ -59,7 +59,7 @@ export default async function RootLayout({
       <body className="min-h-screen bg-white text-slate-950 antialiased">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}
         />
         <SiteHeaderChrome serviceDistricts={managedServiceDistricts} />
         <main>{children}</main>

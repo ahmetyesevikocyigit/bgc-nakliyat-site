@@ -32,9 +32,11 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # local admin runtime data
 /src/data/admin-settings.json
+/.data/
 
 # vercel
 .vercel

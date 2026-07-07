@@ -9,6 +9,15 @@ export const metadata: Metadata = {
   title: "Galeri",
   description:
     "BGC Nakliyat gerçek çalışma fotoğrafları ve video galerisi. Evden eve nakliyat, asansörlü taşıma, paketleme ve şehirlerarası nakliyat işleri.",
+  alternates: {
+    canonical: "/galeri",
+  },
+  openGraph: {
+    title: "Galeri | BGC Nakliyat",
+    description: "BGC Nakliyat gerçek çalışma fotoğrafları ve video galerisi.",
+    url: "/galeri",
+    type: "website",
+  },
 };
 
 export default async function GalleryPage() {

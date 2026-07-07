@@ -59,10 +59,14 @@ export async function generateMetadata({ params }: DistrictPageProps): Promise<M
   return {
     title: page.seoTitle,
     description: page.seoDescription,
+    alternates: {
+      canonical: `/bolgeler/${page.slug}`,
+    },
     openGraph: {
       title: page.seoTitle,
       description: page.seoDescription,
       type: "website",
+      url: `/bolgeler/${page.slug}`,
     },
   };
 }

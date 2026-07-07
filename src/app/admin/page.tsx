@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { LockKeyhole } from "lucide-react";
-import { loginAction } from "@/app/admin/actions";
+import { loginAction, saveAdminContentAction } from "@/app/admin/actions";
 import { AdminContentEditor } from "@/components/admin-content-editor";
 import { AdminSessionGuard } from "@/components/admin-session-guard";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
@@ -32,7 +32,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = await searchParams;
 
   if (!isAuthenticated) {
-    return <AdminLogin hasError={params?.error === "1"} />;
+    return <AdminLogin hasError={Boolean(params?.error)} />;
   }
 
   return (
@@ -42,6 +42,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         content={await getEditableContent()}
         mediaItems={await getMediaLibrary()}
         quoteRequests={await getQuoteRequests()}
+        saveAction={saveAdminContentAction}
         initialSection={params?.section}
         saved={params?.saved === "1"}
         hasContentError={params?.error === "content"}
@@ -125,7 +126,7 @@ function AdminLogin({ hasError }: { hasError: boolean }) {
             </label>
             {hasError ? (
               <p className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-bold text-orange-800">
-                Şifre hatalı.
+                Çok fazla deneme yapıldıysa biraz bekleyin. Aksi halde şifre hatalı.
               </p>
             ) : null}
             <button

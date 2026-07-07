@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Send } from "lucide-react";
 import { services } from "@/lib/site-data";
+import { allowedImageTypes, maxQuoteImageUploadSize } from "@/lib/upload-rules";
 
 const maxMessageLength = 1000;
 const inputClassName =
@@ -13,6 +14,8 @@ const inputClassName =
 export function QuoteFormSection() {
   const pathname = usePathname();
   const [message, setMessage] = useState("");
+  const [photoError, setPhotoError] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const serviceTitles = useMemo(() => services.map((service) => service.title), []);
 
@@ -47,6 +50,20 @@ export function QuoteFormSection() {
             const moveDate = String(formData.get("moveDate") || "");
             const elevatorNeed = String(formData.get("elevatorNeed") || "");
             const details = String(formData.get("message") || "");
+            const photos = formData.getAll("photos").filter((item): item is File => item instanceof File && item.size > 0);
+            const invalidPhoto = photos.find((photo) => !allowedImageTypes.has(photo.type) || photo.size > maxQuoteImageUploadSize);
+
+            if (invalidPhoto) {
+              setPhotoError(
+                !allowedImageTypes.has(invalidPhoto.type)
+                  ? "Eşya fotoğrafı JPG, PNG, WebP veya AVIF olmalı."
+                  : "Eşya fotoğrafı en fazla 8 MB olabilir.",
+              );
+              return;
+            }
+
+            setPhotoError("");
+            setSubmitError("");
             const text = [
               "Merhaba, ücretsiz nakliyat teklifi almak istiyorum.",
               `Ad Soyad: ${fullName}`,
@@ -68,12 +85,21 @@ export function QuoteFormSection() {
             setIsSubmitting(true);
 
             try {
-              await fetch("/api/quote-requests", {
+              const response = await fetch("/api/quote-requests", {
                 method: "POST",
                 body: formData,
               });
+
+              if (!response.ok) {
+                const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+                setSubmitError(payload?.message || "Teklif talebi kaydedilemedi.");
+                setIsSubmitting(false);
+                return;
+              }
             } catch {
-              // WhatsApp yönlendirmesi yine de çalışmalı.
+              setSubmitError("Teklif talebi kaydedilemedi. Lütfen tekrar deneyin.");
+              setIsSubmitting(false);
+              return;
             }
 
             window.location.href = `https://wa.me/905308461934?text=${encodeURIComponent(text)}`;
@@ -192,10 +218,31 @@ export function QuoteFormSection() {
               <input
                 name="photos"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/avif"
                 multiple
+                onChange={(event) => {
+                  const files = Array.from(event.target.files || []);
+                  const invalidFile = files.find((file) => !allowedImageTypes.has(file.type) || file.size > maxQuoteImageUploadSize);
+
+                  if (invalidFile) {
+                    setPhotoError(
+                      !allowedImageTypes.has(invalidFile.type)
+                        ? "Eşya fotoğrafı JPG, PNG, WebP veya AVIF olmalı."
+                        : "Eşya fotoğrafı en fazla 8 MB olabilir.",
+                    );
+                    event.currentTarget.value = "";
+                    return;
+                  }
+
+                  setPhotoError("");
+                }}
                 className="block min-h-12 w-full rounded-lg border border-dashed border-slate-600 bg-black/58 px-4 py-3 text-sm font-semibold text-white file:mr-3 file:rounded-full file:border-0 file:bg-orange-500 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-orange-600"
               />
+              {photoError ? (
+                <span className="rounded-lg border border-orange-300 bg-orange-500/10 px-3 py-2 text-xs font-bold text-orange-100">
+                  {photoError}
+                </span>
+              ) : null}
             </QuoteField>
           </div>
 
@@ -223,6 +270,11 @@ export function QuoteFormSection() {
             <Send className="size-5" aria-hidden="true" />
             {isSubmitting ? "Gönderiliyor" : "Teklif Alın"}
           </button>
+          {submitError ? (
+            <p className="rounded-lg border border-orange-300 bg-orange-500/10 px-3 py-2 text-sm font-bold text-orange-100">
+              {submitError}
+            </p>
+          ) : null}
         </form>
       </div>
     </section>

@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { readStoreJson, writeStoreJson } from "@/lib/persistent-store";
+import {
+  insertQuoteRequestRow,
+  pruneQuoteRequests,
+  readQuoteRequestRows,
+  runSqliteTransaction,
+} from "@/lib/sqlite-store";
 
 export type QuoteRequest = {
   id: string;
@@ -86,14 +91,18 @@ function normalizeQuoteRequest(request: Partial<QuoteRequest>): QuoteRequest | n
 }
 
 export async function getQuoteRequests(): Promise<QuoteRequest[]> {
-  const parsedValue = await readStoreJson<unknown>("quote-requests", []);
+  return readQuoteRequestRows()
+    .map((row) => {
+      const fields = JSON.parse(row.fields_json) as Partial<QuoteRequest>;
+      const photoUrls = JSON.parse(row.photo_urls_json) as string[];
 
-  if (!Array.isArray(parsedValue)) {
-    return [];
-  }
-
-  return parsedValue
-    .map((item) => normalizeQuoteRequest(item as Partial<QuoteRequest>))
+      return normalizeQuoteRequest({
+        ...fields,
+        id: row.id,
+        createdAt: row.created_at,
+        photoUrls,
+      });
+    })
     .filter((item): item is QuoteRequest => Boolean(item))
     .sort((first, second) => second.createdAt.localeCompare(first.createdAt));
 }
@@ -109,8 +118,28 @@ export async function saveQuoteRequest(input: QuoteRequestInput) {
     throw new Error("Invalid quote request");
   }
 
-  const requests = [request, ...(await getQuoteRequests())].slice(0, 500);
-  await writeStoreJson("quote-requests", requests);
+  runSqliteTransaction(() => {
+    insertQuoteRequestRow({
+      id: request.id,
+      createdAt: request.createdAt,
+      fields: {
+        fullName: request.fullName,
+        email: request.email,
+        phone: request.phone,
+        service: request.service,
+        fromAddress: request.fromAddress,
+        toAddress: request.toAddress,
+        fromFloor: request.fromFloor,
+        toFloor: request.toFloor,
+        roomCount: request.roomCount,
+        moveDate: request.moveDate,
+        elevatorNeed: request.elevatorNeed,
+        message: request.message,
+      },
+      photoUrls: request.photoUrls,
+    });
+    pruneQuoteRequests(500);
+  });
 
   return request;
 }

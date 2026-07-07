@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "db:migrate": "node scripts/migrate-json-to-sqlite.mjs",
+    "admin:reset-password": "node scripts/reset-admin-password.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.23.0",
@@ -23,6 +28,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
+    "tsx": "^4.23.0",
     "typescript": "^5"
   }
 }
