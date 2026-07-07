@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { LockKeyhole } from "lucide-react";
-import { loginAction, saveAdminContentAction } from "@/app/admin/actions";
+import { loginAction } from "@/app/admin/actions";
 import { AdminContentEditor } from "@/components/admin-content-editor";
 import { AdminSessionGuard } from "@/components/admin-session-guard";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
@@ -42,7 +42,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         content={await getEditableContent()}
         mediaItems={await getMediaLibrary()}
         quoteRequests={await getQuoteRequests()}
-        saveAction={saveAdminContentAction}
+        saveAction="/api/admin/content"
         initialSection={params?.section}
         saved={params?.saved === "1"}
         hasContentError={params?.error === "content"}

@@ -63,7 +63,7 @@ type AdminContentEditorProps = {
   content: EditableContent;
   mediaItems: MediaItem[];
   quoteRequests: QuoteRequest[];
-  saveAction: (formData: FormData) => void | Promise<void>;
+  saveAction: string;
   initialSection?: string;
   saved?: boolean;
   hasContentError?: boolean;
@@ -785,6 +785,7 @@ export function AdminContentEditor({
     <div className="min-h-screen bg-[#eef1f0] px-3 py-3 text-slate-950 sm:px-5 lg:px-7">
       <form
         action={saveAction}
+        method="post"
         encType="multipart/form-data"
         onKeyDown={preventAccidentalEnterSubmit}
         onSubmit={() => {
