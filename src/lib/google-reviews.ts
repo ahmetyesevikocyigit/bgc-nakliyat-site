@@ -1,4 +1,5 @@
 import { getEditableContent } from "@/lib/editable-content";
+import { readKvJson, writeKvJson } from "@/lib/sqlite-store";
 
 export type SiteReview = {
   author: string;
@@ -49,6 +50,13 @@ type GooglePlaceDetails = {
 
 const GOOGLE_PLACE_DETAILS_FIELD_MASK = "displayName,rating,userRatingCount,reviews,googleMapsUri";
 const GOOGLE_PLACE_DETAILS_REVALIDATE_SECONDS = 60 * 60;
+export const GOOGLE_REVIEWS_CACHE_KEY = "google-reviews-cache";
+export const GOOGLE_REVIEWS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+type GoogleReviewsCache = {
+  fetchedAt: string;
+  data: GoogleReviewsData;
+};
 
 export class GoogleReviewsConfigError extends Error {
   constructor(message = "Google Places API yapılandırması eksik.") {
@@ -102,7 +110,32 @@ function normalizePlace(place: GooglePlaceDetails): GoogleReviewsData {
   };
 }
 
-export async function getGoogleReviewsData(): Promise<GoogleReviewsData> {
+function readGoogleReviewsCache() {
+  return readKvJson<GoogleReviewsCache>(GOOGLE_REVIEWS_CACHE_KEY);
+}
+
+function writeGoogleReviewsCache(data: GoogleReviewsData) {
+  writeKvJson<GoogleReviewsCache>(GOOGLE_REVIEWS_CACHE_KEY, {
+    fetchedAt: new Date().toISOString(),
+    data,
+  });
+}
+
+function getFreshCachedData(cache: GoogleReviewsCache | null) {
+  if (!cache) {
+    return null;
+  }
+
+  const fetchedAt = new Date(cache.fetchedAt).getTime();
+
+  if (Number.isFinite(fetchedAt) && Date.now() - fetchedAt < GOOGLE_REVIEWS_CACHE_TTL_MS) {
+    return cache.data;
+  }
+
+  return null;
+}
+
+async function fetchGoogleReviewsData(): Promise<GoogleReviewsData> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY?.trim();
   const placeId = process.env.GOOGLE_PLACE_ID?.trim().replace(/^places\//, "");
 
@@ -126,6 +159,32 @@ export async function getGoogleReviewsData(): Promise<GoogleReviewsData> {
   }
 
   return normalizePlace((await response.json()) as GooglePlaceDetails);
+}
+
+export async function refreshGoogleReviewsCache(): Promise<GoogleReviewsData> {
+  const data = await fetchGoogleReviewsData();
+  writeGoogleReviewsCache(data);
+
+  return data;
+}
+
+export async function getGoogleReviewsData(): Promise<GoogleReviewsData> {
+  const cache = readGoogleReviewsCache();
+  const freshCachedData = getFreshCachedData(cache);
+
+  if (freshCachedData) {
+    return freshCachedData;
+  }
+
+  try {
+    return await refreshGoogleReviewsCache();
+  } catch (error) {
+    if (cache) {
+      return cache.data;
+    }
+
+    throw error;
+  }
 }
 
 export async function getGoogleReviews(): Promise<SiteReview[]> {

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { FloatingWhatsapp } from "@/components/floating-whatsapp";
 import { Footer } from "@/components/footer";
+import { FooterGoogleReviews } from "@/components/footer-google-reviews";
 import { Header } from "@/components/header";
 import { QuoteFormSection } from "@/components/quote-form-section";
 
@@ -36,6 +37,7 @@ export function SiteFooterChrome() {
   return (
     <>
       <QuoteFormSection />
+      <FooterGoogleReviews />
       <Footer />
       <FloatingWhatsapp />
     </>

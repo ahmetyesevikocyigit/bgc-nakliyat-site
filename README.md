@@ -55,6 +55,19 @@ It normalizes the response for the frontend as:
 
 If the env values are missing or Google returns an error, the hero/header widgets keep using the editable fallback reviews instead of crashing.
 
+The footer review component uses the same server route. Reviews are cached in SQLite under `google-reviews-cache`.
+Refresh the cache manually with:
+
+```bash
+pnpm reviews:refresh
+```
+
+On the VPS, run it every 24 hours with cron:
+
+```cron
+0 4 * * * cd /var/www/bgc-nakliyat-site && set -a && . ./.env.production.local && set +a && BGC_DB_PATH=/var/www/bgc-nakliyat-data/bgc.sqlite corepack pnpm reviews:refresh >> /var/log/bgc-google-reviews-refresh.log 2>&1
+```
+
 ## Checks
 
 ```bash

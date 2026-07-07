@@ -11,7 +11,8 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "db:migrate": "node scripts/migrate-json-to-sqlite.mjs",
-    "admin:reset-password": "node scripts/reset-admin-password.mjs"
+    "admin:reset-password": "node scripts/reset-admin-password.mjs",
+    "reviews:refresh": "node --import tsx scripts/refresh-google-reviews.ts"
   },
   "dependencies": {
     "lucide-react": "^1.23.0",
