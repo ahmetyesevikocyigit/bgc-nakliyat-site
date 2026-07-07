@@ -71,6 +71,11 @@ type ContentBlock = {
   value: string;
 };
 
+const maxImageUploadSize = 12_000_000;
+const maxVideoUploadSize = 90_000_000;
+const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+const allowedVideoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+
 function slugify(value: string) {
   return value
     .toLocaleLowerCase("tr-TR")
@@ -216,6 +221,34 @@ function isAdminSection(value: unknown): value is AdminSection {
 
 function getFilePreviewUrl(file?: File) {
   return file ? URL.createObjectURL(file) : "";
+}
+
+function getMediaFileError(file: File | undefined, type: MediaType) {
+  if (!file) {
+    return "";
+  }
+
+  if (type === "image") {
+    if (!allowedImageTypes.has(file.type)) {
+      return "Bu görsel formatı desteklenmiyor. JPG, PNG, WebP veya AVIF yükleyin.";
+    }
+
+    if (file.size > maxImageUploadSize) {
+      return "Görsel çok büyük. En fazla 12 MB dosya yükleyin.";
+    }
+
+    return "";
+  }
+
+  if (!allowedVideoTypes.has(file.type)) {
+    return "Bu video formatı desteklenmiyor. MP4, WebM veya MOV yükleyin.";
+  }
+
+  if (file.size > maxVideoUploadSize) {
+    return "Video çok büyük. En fazla 90 MB dosya yükleyin.";
+  }
+
+  return "";
 }
 
 function getInitialAdminSection(initialSection?: string): AdminSection {
@@ -1483,6 +1516,36 @@ function MediaLibraryPanel({
   onUpdateMediaPosterPreview,
 }: MediaLibraryPanelProps) {
   const activeBlogs = blogPosts.filter((post) => post.slug);
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
+  const [previewErrors, setPreviewErrors] = useState<Record<string, string>>({});
+
+  const updateUploadError = (id: string, message: string) => {
+    setUploadErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+
+      if (message) {
+        nextErrors[id] = message;
+      } else {
+        delete nextErrors[id];
+      }
+
+      return nextErrors;
+    });
+  };
+
+  const updatePreviewError = (id: string, message: string) => {
+    setPreviewErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+
+      if (message) {
+        nextErrors[id] = message;
+      } else {
+        delete nextErrors[id];
+      }
+
+      return nextErrors;
+    });
+  };
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80 sm:p-6">
@@ -1518,7 +1581,15 @@ function MediaLibraryPanel({
 
       <div className="grid gap-5">
         {mediaItems.length > 0 ? (
-          mediaItems.map((item, index) => (
+          mediaItems.map((item, index) => {
+            const previewSrc =
+              item.type === "image"
+                ? mediaFilePreviews[item.id] || item.src
+                : mediaPosterPreviews[item.id] || item.posterSrc;
+            const previewError = previewErrors[item.id];
+            const uploadError = uploadErrors[item.id];
+
+            return (
             <article key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <div className="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-start">
                 <div className="flex items-center gap-3">
@@ -1551,16 +1622,30 @@ function MediaLibraryPanel({
               <div className="grid gap-4 xl:grid-cols-[240px_1fr]">
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                   <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-950">
-                    {item.type === "image" && (mediaFilePreviews[item.id] || item.src) ? (
-                      <img src={mediaFilePreviews[item.id] || item.src} alt="" className="h-full w-full object-cover" />
-                    ) : item.type === "video" && (mediaPosterPreviews[item.id] || item.posterSrc) ? (
-                      <img src={mediaPosterPreviews[item.id] || item.posterSrc} alt="" className="h-full w-full object-cover" />
+                    {previewSrc && !previewError ? (
+                      <img
+                        src={previewSrc}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        onLoad={() => updatePreviewError(item.id, "")}
+                        onError={() =>
+                          updatePreviewError(
+                            item.id,
+                            "Görsel önizlemesi yüklenemedi. Dosya yolu silinmiş, taşınmış veya format desteklenmiyor olabilir.",
+                          )
+                        }
+                      />
                     ) : (
-                      <div className="grid h-full place-items-center text-center text-xs font-black uppercase tracking-[0.12em] text-white/70">
-                        Önizleme
+                      <div className="grid h-full place-items-center px-4 text-center text-xs font-black uppercase tracking-[0.12em] text-white/70">
+                        {previewError || "Önizleme"}
                       </div>
                     )}
                   </div>
+                  {previewError || uploadError ? (
+                    <p className="mt-3 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-bold leading-5 text-orange-800">
+                      {uploadError || previewError}
+                    </p>
+                  ) : null}
                   <label className="mt-3 grid gap-2">
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
                       {item.type === "video" ? "MP4 Yükle" : "Fotoğraf Yükle"}
@@ -1568,8 +1653,22 @@ function MediaLibraryPanel({
                     <input
                       name={`mediaFile-${item.id}`}
                       type="file"
-                      accept={item.type === "video" ? "video/mp4,video/webm,video/quicktime" : "image/*"}
-                      onChange={(event) => onUpdateMediaFilePreview(item.id, event.target.files?.[0])}
+                      accept={item.type === "video" ? "video/mp4,video/webm,video/quicktime" : "image/jpeg,image/png,image/webp,image/avif"}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        const error = getMediaFileError(file, item.type);
+
+                        if (error) {
+                          updateUploadError(item.id, error);
+                          onUpdateMediaFilePreview(item.id, undefined);
+                          event.currentTarget.value = "";
+                          return;
+                        }
+
+                        updateUploadError(item.id, "");
+                        updatePreviewError(item.id, "");
+                        onUpdateMediaFilePreview(item.id, file);
+                      }}
                       className="block w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-orange-500 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-orange-600"
                     />
                   </label>
@@ -1581,8 +1680,22 @@ function MediaLibraryPanel({
                       <input
                         name={`mediaPosterFile-${item.id}`}
                         type="file"
-                        accept="image/*"
-                        onChange={(event) => onUpdateMediaPosterPreview(item.id, event.target.files?.[0])}
+                        accept="image/jpeg,image/png,image/webp,image/avif"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          const error = getMediaFileError(file, "image");
+
+                          if (error) {
+                            updateUploadError(item.id, error);
+                            onUpdateMediaPosterPreview(item.id, undefined);
+                            event.currentTarget.value = "";
+                            return;
+                          }
+
+                          updateUploadError(item.id, "");
+                          updatePreviewError(item.id, "");
+                          onUpdateMediaPosterPreview(item.id, file);
+                        }}
                         className="block w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-slate-800 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-slate-950"
                       />
                     </label>
@@ -1700,7 +1813,8 @@ function MediaLibraryPanel({
                 </div>
               </div>
             </article>
-          ))
+          );
+          })
         ) : (
           <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm font-semibold leading-7 text-slate-600">
             Henüz medya kaydı yok. Fotoğraf veya video ekleyerek başlayabilirsin.

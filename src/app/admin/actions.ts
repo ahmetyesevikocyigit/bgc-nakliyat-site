@@ -316,6 +316,11 @@ const adminSectionIds = new Set([
   "settings",
 ]);
 
+const maxImageUploadSize = 12_000_000;
+const maxVideoUploadSize = 90_000_000;
+const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+const allowedVideoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+
 function getAdminRedirectPath(formData: FormData, searchParams = "") {
   const activeSection = formData.get("activeSection");
   const section =
@@ -372,15 +377,11 @@ async function saveMediaUpload(
     return null;
   }
 
-  if (type === "image" && !fileValue.type.startsWith("image/")) {
+  if (type === "image" && (!allowedImageTypes.has(fileValue.type) || fileValue.size > maxImageUploadSize)) {
     return null;
   }
 
-  if (type === "video" && !fileValue.type.startsWith("video/")) {
-    return null;
-  }
-
-  if (type === "video" && fileValue.size > 90_000_000) {
+  if (type === "video" && (!allowedVideoTypes.has(fileValue.type) || fileValue.size > maxVideoUploadSize)) {
     return null;
   }
 
@@ -434,7 +435,7 @@ async function saveUploadedImage(fileValue: FormDataEntryValue | null, key: stri
     return null;
   }
 
-  if (!fileValue.type.startsWith("image/")) {
+  if (!allowedImageTypes.has(fileValue.type) || fileValue.size > maxImageUploadSize) {
     return null;
   }
 
