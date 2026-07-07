@@ -6,7 +6,6 @@ import {
 } from "lucide-react";
 import { ActionLinks } from "@/components/action-links";
 import { FaqAccordion } from "@/components/faq-accordion";
-import { HeroGoogleReviews } from "@/components/hero-google-reviews";
 import { HeroPhotoSlider } from "@/components/hero-photo-slider";
 import { ServiceCard } from "@/components/service-card";
 import { getEditableContent } from "@/lib/editable-content";
@@ -68,16 +67,7 @@ export default async function Home() {
               sizes="(min-width: 1024px) 54vw, 100vw"
             />
             <div className="absolute inset-0 hidden bg-[linear-gradient(90deg,rgba(2,6,23,0.86),rgba(2,6,23,0.2)_55%,rgba(2,6,23,0.06))] lg:block" />
-            <div className="absolute bottom-6 left-6 hidden w-[380px] lg:block">
-              <HeroGoogleReviews compact />
-            </div>
           </div>
-        </div>
-      </section>
-
-      <section className="bg-white px-4 pb-4 pt-0 lg:hidden">
-        <div className="mx-auto max-w-7xl">
-          <HeroGoogleReviews compact variant="mobile" />
         </div>
       </section>
 
