@@ -8,7 +8,7 @@ import { PortfolioJobsSection } from "@/components/portfolio-jobs-section";
 import { getEditableContent, type DistrictPageContent } from "@/lib/editable-content";
 import { getMediaForGallery, getMediaLibrary } from "@/lib/media-library";
 import { createDistrictSlug, createSlug } from "@/lib/slug";
-import { services } from "@/lib/site-data";
+import { company, services } from "@/lib/site-data";
 
 export const dynamic = "force-dynamic";
 
@@ -46,19 +46,19 @@ async function getDistrictPage(slug: string) {
   };
 }
 
-function getDistrictMapEmbedUrl(district: string) {
-  return `https://www.google.com/maps?q=${encodeURIComponent(
-    `Bgc Nakliyat Evden Eve Nakliyat ${district}`,
-  )}&output=embed`;
+function getDistrictMapEmbedUrl() {
+  return company.googleMapsEmbedUrl;
 }
 
-function normalizeDistrictHtml(html: string, district: string) {
-  const mapEmbedUrl = getDistrictMapEmbedUrl(district);
+function normalizeDistrictHtml(html: string) {
+  const mapEmbedUrl = getDistrictMapEmbedUrl();
 
-  return html.replace(
-    /src=(["'])https:\/\/(?:www\.)?google\.com\/?\1/gi,
-    `src="${mapEmbedUrl}"`,
-  );
+  return html
+    .replace(/src=(["'])https:\/\/(?:www\.)?google\.com\/?\1/gi, `src="${mapEmbedUrl}"`)
+    .replace(
+      /src=(["'])https:\/\/www\.google\.com\/maps\?q=Bgc[^"']*(?:&|&amp;)output=embed\1/gi,
+      `src="${mapEmbedUrl}"`,
+    );
 }
 
 export async function generateMetadata({ params }: DistrictPageProps): Promise<Metadata> {
@@ -140,7 +140,7 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div
             className="editable-region-html rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
-            dangerouslySetInnerHTML={{ __html: normalizeDistrictHtml(page.html, district) }}
+            dangerouslySetInnerHTML={{ __html: normalizeDistrictHtml(page.html) }}
           />
         </div>
       </section>

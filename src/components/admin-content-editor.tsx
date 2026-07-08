@@ -38,7 +38,7 @@ import type {
 } from "@/lib/editable-content";
 import { mediaCategories, type MediaItem, type MediaType } from "@/lib/media-shared";
 import type { QuoteRequest } from "@/lib/quote-requests";
-import { services } from "@/lib/site-data";
+import { company, services } from "@/lib/site-data";
 import {
   allowedImageTypes,
   allowedVideoTypes,
@@ -143,11 +143,11 @@ function escapeHtml(value: string) {
 
 function createDistrictMapIframe(district: string) {
   const safeDistrict = escapeHtml(district);
-  const mapQuery = encodeURIComponent(`Bgc Nakliyat Evden Eve Nakliyat ${district}`);
+  const safeMapUrl = escapeHtml(company.googleMapsEmbedUrl);
 
   return [
     `<div style="width: 100%; text-align: center; margin-top: 20px; margin-bottom: 20px;">`,
-    `<iframe src="https://www.google.com/maps?q=${mapQuery}&output=embed" width="100%" height="450" style="border: 0; border-radius: 8px;" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="BGC Nakliyat ${safeDistrict} Google Harita"></iframe>`,
+    `<iframe src="${safeMapUrl}" width="100%" height="450" style="border: 0; border-radius: 8px;" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="BGC Nakliyat ${safeDistrict} Google Harita"></iframe>`,
     `</div>`,
   ].join("\n");
 }
