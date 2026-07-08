@@ -20,7 +20,7 @@ export function Footer() {
               />
             </span>
             <div>
-              <p className="font-black tracking-tight">{company.name}</p>
+              <p className="font-bold tracking-tight">{company.name}</p>
               <p className="text-sm text-slate-400">İstanbul nakliyat çözümleri</p>
             </div>
           </div>
@@ -32,14 +32,14 @@ export function Footer() {
             href={avebworks.href}
             target="_blank"
             rel="noreferrer"
-            className="mt-6 inline-flex text-xs font-black uppercase tracking-[0.18em] text-slate-500 transition hover:text-orange-300"
+            className="mt-6 inline-flex text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 transition hover:text-orange-300"
           >
             Site: {avebworks.name}
           </a>
         </div>
 
         <div>
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-400">
             Sayfalar
           </h2>
           <div className="grid gap-3">
@@ -47,7 +47,7 @@ export function Footer() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-semibold text-slate-200 transition hover:text-orange-300"
+                className="text-sm font-medium text-slate-200 transition hover:text-orange-300"
               >
                 {item.label}
               </Link>
@@ -56,7 +56,7 @@ export function Footer() {
         </div>
 
         <div>
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-400">
             İletişim
           </h2>
           <div className="grid gap-4 text-sm text-slate-300">
