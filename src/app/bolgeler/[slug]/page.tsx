@@ -46,6 +46,21 @@ async function getDistrictPage(slug: string) {
   };
 }
 
+function getDistrictMapEmbedUrl(district: string) {
+  return `https://www.google.com/maps?q=${encodeURIComponent(
+    `Bgc Nakliyat Evden Eve Nakliyat ${district}`,
+  )}&output=embed`;
+}
+
+function normalizeDistrictHtml(html: string, district: string) {
+  const mapEmbedUrl = getDistrictMapEmbedUrl(district);
+
+  return html.replace(
+    /src=(["'])https:\/\/(?:www\.)?google\.com\/?\1/gi,
+    `src="${mapEmbedUrl}"`,
+  );
+}
+
 export async function generateMetadata({ params }: DistrictPageProps): Promise<Metadata> {
   const { slug } = await params;
   const districtPage = await getDistrictPage(slug);
@@ -125,7 +140,7 @@ export default async function DistrictPage({ params }: DistrictPageProps) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div
             className="editable-region-html rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
-            dangerouslySetInnerHTML={{ __html: page.html }}
+            dangerouslySetInnerHTML={{ __html: normalizeDistrictHtml(page.html, district) }}
           />
         </div>
       </section>
