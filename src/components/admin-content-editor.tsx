@@ -133,6 +133,60 @@ function sanitizePreviewHtml(html: string) {
   return html;
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function createDistrictMapIframe(district: string) {
+  const safeDistrict = escapeHtml(district);
+  const mapQuery = encodeURIComponent(`Bgc Nakliyat Evden Eve Nakliyat ${district}`);
+
+  return [
+    `<div style="width: 100%; text-align: center; margin-top: 20px; margin-bottom: 20px;">`,
+    `<iframe src="https://www.google.com/maps?q=${mapQuery}&output=embed" width="100%" height="450" style="border: 0; border-radius: 8px;" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="BGC Nakliyat ${safeDistrict} Google Harita"></iframe>`,
+    `</div>`,
+  ].join("\n");
+}
+
+function createDistrictSeoHtml(district: string) {
+  const safeDistrict = escapeHtml(district);
+
+  return [
+    `<h1>${safeDistrict} Evden Eve Nakliyat | BGC Nakliyat</h1>`,
+    ``,
+    `<p>İstanbul’un yoğun taşınma bölgelerinden biri olan ${safeDistrict}’ta ev taşıma süreci, bina yapısı, trafik, kat bilgisi ve eşya hacmine göre profesyonel planlama gerektirir. <strong>BGC Nakliyat</strong> olarak ${safeDistrict} evden eve nakliyat ihtiyaçlarınızda güvenli, sigortalı ve planlı taşımacılık çözümleri sunuyoruz.</p>`,
+    ``,
+    `<p>${safeDistrict} bölgesindeki apartman, site, rezidans ve müstakil yapılara uygun araç, ekip ve paketleme planı oluşturarak taşınma sürecini baştan sona organize ediyoruz.</p>`,
+    ``,
+    `<h2>${safeDistrict}’ta Sunduğumuz Nakliyat Hizmetleri</h2>`,
+    ``,
+    `<ul>`,
+    `<li><strong>${safeDistrict} Evden Eve Taşıma:</strong> Ücretsiz keşif aşamasından yeni adrese yerleşime kadar taşıma sürecini planlıyoruz.</li>`,
+    `<li><strong>${safeDistrict} Asansörlü Nakliyat:</strong> Yüksek katlı binalarda eşyaların hızlı ve güvenli taşınması için dış cephe asansörü desteği sağlıyoruz.</li>`,
+    `<li><strong>Parça Eşya Taşıma:</strong> Az eşya, tek oda, öğrenci evi veya küçük hacimli taşımalar için ekonomik çözümler sunuyoruz.</li>`,
+    `<li><strong>Paketleme ve Montaj:</strong> Mobilya söküm-kurulum, beyaz eşya hazırlığı ve kırılacak eşya paketleme işlemlerini dikkatle yürütüyoruz.</li>`,
+    `</ul>`,
+    ``,
+    `<h2>Neden ${safeDistrict} Nakliyat Hizmetinde BGC Nakliyat?</h2>`,
+    ``,
+    `<ul>`,
+    `<li><strong>Yerel Bölge Hakimiyeti:</strong> ${safeDistrict} sokak, site ve bina koşullarına göre taşıma planı hazırlanır.</li>`,
+    `<li><strong>Sigortalı ve Sözleşmeli Taşıma:</strong> Talebe göre sigortalı nakliye ve yazılı hizmet süreci sunulur.</li>`,
+    `<li><strong>Zamanında Operasyon:</strong> Ekip, araç ve rota planı taşınma saatine göre organize edilir.</li>`,
+    `</ul>`,
+    ``,
+    `<h2>${safeDistrict} Evden Eve Nakliyat Fiyatları</h2>`,
+    ``,
+    `<p>${safeDistrict} ev taşıma fiyatları; eşya miktarı, çıkış ve varış katları, asansör kullanımı, paketleme ihtiyacı ve iki adres arasındaki mesafeye göre değişir. WhatsApp üzerinden fotoğraf veya video paylaşarak hızlı ve net fiyat teklifi alabilirsiniz.</p>`,
+    ``,
+    createDistrictMapIframe(district),
+  ].join("\n");
+}
+
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -2297,6 +2351,15 @@ function DistrictPagesPanel({
       value: `<blockquote>${selectedPage.district} taşınma detaylarını WhatsApp üzerinden paylaşarak hızlı fiyat teklifi alabilirsiniz.</blockquote>`,
     },
   ];
+  const applyDistrictSeoTemplate = () => {
+    onUpdatePage(selectedPage.slug, "seoTitle", `${selectedPage.district} Evden Eve Nakliyat | BGC Nakliyat`);
+    onUpdatePage(
+      selectedPage.slug,
+      "seoDescription",
+      `${selectedPage.district} evden eve nakliyat ihtiyaçlarınızda BGC Nakliyat ile sigortalı, asansörlü ve planlı taşımacılık hizmeti alın.`,
+    );
+    onUpdatePage(selectedPage.slug, "html", createDistrictSeoHtml(selectedPage.district));
+  };
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80 sm:p-6">
@@ -2379,6 +2442,16 @@ function DistrictPagesPanel({
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
+                <EditorToolButton
+                  icon={FileText}
+                  label="SEO Şablonu"
+                  onClick={applyDistrictSeoTemplate}
+                />
+                <EditorToolButton
+                  icon={MapPin}
+                  label="Harita"
+                  onClick={() => onInsertHtml(selectedPage.slug, createDistrictMapIframe(selectedPage.district))}
+                />
                 {htmlSnippets.map((snippet) => (
                   <EditorToolButton
                     key={snippet.label}
