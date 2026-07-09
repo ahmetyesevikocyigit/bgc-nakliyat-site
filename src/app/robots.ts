@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
-        disallow: ["/admin", "/api"],
+        allow: ["/", "/api/google-reviews"],
+        disallow: ["/admin", "/api/admin", "/api/quote-requests"],
       },
     ],
     sitemap: "https://www.bgcnakliyat.com/sitemap.xml",
