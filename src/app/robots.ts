@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/api/admin", "/api/quote-requests"],
       },
     ],
-    sitemap: "https://www.bgcnakliyat.com/sitemap.xml",
+    sitemap: ["https://bgcnakliyat.com/sitemap.xml", "https://www.bgcnakliyat.com/sitemap.xml"],
   };
 }
