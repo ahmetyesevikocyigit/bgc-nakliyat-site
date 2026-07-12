@@ -18,6 +18,47 @@ function getTypeLabel(type: MediaType) {
   return type === "video" ? "Video" : "Fotoğraf";
 }
 
+function getYouTubeId(src: string) {
+  try {
+    const url = new URL(src);
+    const host = url.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      return url.pathname.split("/").filter(Boolean)[0] || "";
+    }
+
+    if (host.includes("youtube.com")) {
+      if (url.pathname.startsWith("/embed/")) {
+        return url.pathname.split("/").filter(Boolean)[1] || "";
+      }
+
+      if (url.pathname.startsWith("/shorts/")) {
+        return url.pathname.split("/").filter(Boolean)[1] || "";
+      }
+
+      return url.searchParams.get("v") || "";
+    }
+  } catch {
+    return "";
+  }
+
+  return "";
+}
+
+function getVideoPosterSrc(item: MediaItem) {
+  if (item.posterSrc) {
+    return item.posterSrc;
+  }
+
+  if (item.provider === "youtube") {
+    const youtubeId = getYouTubeId(item.src);
+
+    return youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : "";
+  }
+
+  return "";
+}
+
 function MediaVisual({
   item,
   priority = false,
@@ -29,14 +70,16 @@ function MediaVisual({
 }) {
   if (item.type === "video") {
     if (mode === "card") {
-      if (item.posterSrc) {
+      const posterSrc = getVideoPosterSrc(item);
+
+      if (posterSrc) {
         return (
           <Image
-            src={item.posterSrc}
+            src={posterSrc}
             alt={item.alt || item.title}
             title={item.title}
             fill
-            unoptimized={item.posterSrc.startsWith("/uploads/")}
+            unoptimized={posterSrc.startsWith("/uploads/")}
             sizes="(min-width: 1280px) 360px, (min-width: 768px) 45vw, 92vw"
             className="object-cover transition duration-500 group-hover:scale-105"
           />
@@ -106,15 +149,18 @@ export function MediaGallery({
       return;
     }
 
+    const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setActiveItem(null);
       }
     };
 
+    document.body.style.overflow = "hidden";
     document.addEventListener("keydown", closeOnEscape);
 
     return () => {
+      document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, [activeItem]);
@@ -238,7 +284,7 @@ export function MediaGallery({
 
       {activeItem ? (
         <div
-          className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/85 p-4 backdrop-blur"
+          className="fixed inset-0 z-[80] overflow-y-auto bg-slate-950/85 p-3 backdrop-blur sm:p-4"
           role="dialog"
           aria-modal="true"
           onClick={() => setActiveItem(null)}
@@ -246,28 +292,30 @@ export function MediaGallery({
           <button
             type="button"
             onClick={() => setActiveItem(null)}
-            className="absolute right-4 top-4 grid size-11 place-items-center rounded-full bg-white text-slate-950"
+            className="fixed right-4 top-4 z-[90] grid size-11 place-items-center rounded-full bg-white text-slate-950 shadow-lg"
             aria-label="Medya önizlemeyi kapat"
             title="Kapat"
           >
             <X className="size-5" aria-hidden="true" />
           </button>
-          <div
-            className="w-full max-w-5xl overflow-hidden rounded-lg bg-white shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="relative aspect-video bg-slate-950">
-              <MediaVisual item={activeItem} priority />
-            </div>
-            <div className="p-5">
-              <p className="text-xl font-black text-slate-950">
-                {activeItem.title || activeItem.alt || "BGC Nakliyat çalışması"}
-              </p>
-              {activeItem.caption || activeItem.description ? (
-                <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-                  {activeItem.caption || activeItem.description}
+          <div className="flex min-h-full items-center justify-center py-8">
+            <div
+              className="max-h-[calc(100vh-4rem)] w-full max-w-5xl overflow-y-auto rounded-lg bg-white shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="relative aspect-video bg-slate-950">
+                <MediaVisual item={activeItem} priority />
+              </div>
+              <div className="p-5">
+                <p className="text-xl font-black text-slate-950">
+                  {activeItem.title || activeItem.alt || "BGC Nakliyat çalışması"}
                 </p>
-              ) : null}
+                {activeItem.caption || activeItem.description ? (
+                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                    {activeItem.caption || activeItem.description}
+                  </p>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
