@@ -59,12 +59,38 @@ function getVideoPosterSrc(item: MediaItem) {
   return "";
 }
 
+function getPlayableVideoSrc(item: MediaItem, autoplay = false) {
+  if (item.provider === "upload") {
+    return item.src;
+  }
+
+  try {
+    const url = new URL(item.src);
+
+    if (item.provider === "youtube") {
+      url.searchParams.set("rel", "0");
+      url.searchParams.set("modestbranding", "1");
+      url.searchParams.set("playsinline", "1");
+    }
+
+    if (autoplay) {
+      url.searchParams.set("autoplay", "1");
+    }
+
+    return url.toString();
+  } catch {
+    return item.src;
+  }
+}
+
 function MediaVisual({
   item,
+  autoplay = false,
   priority = false,
   mode = "full",
 }: {
   item: MediaItem;
+  autoplay?: boolean;
   priority?: boolean;
   mode?: "card" | "full";
 }) {
@@ -99,6 +125,8 @@ function MediaVisual({
           src={item.src}
           poster={item.posterSrc || undefined}
           controls
+          autoPlay={autoplay}
+          playsInline
           preload="metadata"
           className="h-full w-full object-cover"
         />
@@ -107,9 +135,9 @@ function MediaVisual({
 
     return (
       <iframe
-        src={item.src}
+        src={getPlayableVideoSrc(item, autoplay)}
         title={item.title || item.alt || "BGC Nakliyat video"}
-        loading="lazy"
+        loading={autoplay ? "eager" : "lazy"}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
         className="h-full w-full"
@@ -143,6 +171,7 @@ export function MediaGallery({
   const [selectedType, setSelectedType] = useState<"all" | MediaType>("all");
   const [query, setQuery] = useState("");
   const [activeItem, setActiveItem] = useState<MediaItem | null>(null);
+  const [playingVideoId, setPlayingVideoId] = useState("");
 
   useEffect(() => {
     if (!activeItem) {
@@ -238,42 +267,60 @@ export function MediaGallery({
 
         {filteredItems.length > 0 ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {filteredItems.map((item, index) => (
-              <article
-                key={item.id}
-                className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/80"
-              >
-                <button
-                  type="button"
-                  onClick={() => setActiveItem(item)}
-                  className="relative block aspect-[4/3] w-full overflow-hidden bg-slate-950 text-left"
+            {filteredItems.map((item, index) => {
+              const isPlayingVideo = item.type === "video" && playingVideoId === item.id;
+
+              return (
+                <article
+                  key={item.id}
+                  className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/80"
                 >
-                  <MediaVisual item={item} priority={index < 2} mode="card" />
-                  <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-slate-950 shadow-sm">
-                    {item.type === "video" ? <Film className="size-3.5" aria-hidden="true" /> : <ImageIcon className="size-3.5" aria-hidden="true" />}
-                    {getTypeLabel(item.type)}
-                  </span>
-                  <span className="absolute bottom-3 right-3 grid size-11 place-items-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-950/20">
-                    {item.type === "video" ? <Play className="size-4" aria-hidden="true" /> : <Search className="size-4" aria-hidden="true" />}
-                  </span>
-                </button>
-                <div className="p-5">
-                  <h3 className="text-lg font-black tracking-tight text-slate-950">
-                    {item.title || item.alt || "BGC Nakliyat çalışması"}
-                  </h3>
-                  {item.description ? (
-                    <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-                      {item.description}
-                    </p>
-                  ) : null}
-                  {item.caption ? (
-                    <p className="mt-3 border-l-4 border-orange-300 pl-3 text-xs font-bold leading-5 text-slate-500">
-                      {item.caption}
-                    </p>
-                  ) : null}
-                </div>
-              </article>
-            ))}
+                  {isPlayingVideo ? (
+                    <div className="relative aspect-video w-full overflow-hidden bg-slate-950">
+                      <MediaVisual item={item} autoplay priority mode="full" />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (item.type === "video") {
+                          setPlayingVideoId(item.id);
+                          return;
+                        }
+
+                        setActiveItem(item);
+                      }}
+                      className="relative block aspect-[4/3] w-full overflow-hidden bg-slate-950 text-left"
+                    >
+                      <MediaVisual item={item} priority={index < 2} mode="card" />
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-slate-950 shadow-sm">
+                        {item.type === "video" ? <Film className="size-3.5" aria-hidden="true" /> : <ImageIcon className="size-3.5" aria-hidden="true" />}
+                        {getTypeLabel(item.type)}
+                      </span>
+                      <span className="absolute bottom-3 right-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-orange-500 px-4 text-xs font-black text-white shadow-lg shadow-orange-950/20">
+                        {item.type === "video" ? <Play className="size-4" aria-hidden="true" /> : <Search className="size-4" aria-hidden="true" />}
+                        {item.type === "video" ? "Oynat" : "Büyüt"}
+                      </span>
+                    </button>
+                  )}
+                  <div className="p-5">
+                    <h3 className="text-lg font-black tracking-tight text-slate-950">
+                      {item.title || item.alt || "BGC Nakliyat çalışması"}
+                    </h3>
+                    {item.description ? (
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                        {item.description}
+                      </p>
+                    ) : null}
+                    {item.caption ? (
+                      <p className="mt-3 border-l-4 border-orange-300 pl-3 text-xs font-bold leading-5 text-slate-500">
+                        {item.caption}
+                      </p>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm font-bold leading-7 text-slate-600">
